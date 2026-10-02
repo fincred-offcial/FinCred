@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Customers collection: Customer registrations & leads
+    match /customers/{customerId} {
+      allow read, write: if true;
+    }
+
+    // Applications collection: Loan requests
+    match /applications/{applicationId} {
+      allow read, write: if true;
+    }
+
+    // CIBIL Improvement Orders collection (₹299 UTR verification & loan link delivery)
+    match /cibil_orders/{orderId} {
+      allow read, write: if true;
+    }
+
+    // Notifications collection: Real-time alerts for customers and admin
+    match /notifications/{notificationId} {
+      allow read, write: if true;
+    }
+
+    // Earn & Refer: Referral Profiles (Bank details & unique referral codes)
+    match /referral_profiles/{profileId} {
+      allow read, write: if true;
+    }
+
+    // Earn & Refer: App Download Rewards (₹1 Send -> ₹101 Return)
+    match /app_rewards/{rewardId} {
+      allow read, write: if true;
+    }
+
+    // Earn & Refer: Loan Referrals (₹200 / ₹150 qualifying disbursal rewards)
+    match /loan_referrals/{referralId} {
+      allow read, write: if true;
+    }
+
+    // Earn & Refer: Payouts management & tracking
+    match /payouts/{payoutId} {
+      allow read, write: if true;
+    }
+
+    // Earn & Refer: Audit logs for sensitive bank data access
+    match /payout_audit_logs/{logId} {
+      allow read, write: if true;
+    }
+
+    // Earn & Refer: Admin configurable settings
+    match /earn_settings/{docId} {
+      allow read, write: if true;
+    }
+
+    // Promotional Banners collection: Dynamic banners
+    match /banners/{bannerId} {
+      allow read, write: if true;
+    }
+
+    // Activity Logs collection: Audit activity
+    match /activity_logs/{logId} {
+      allow read, write: if true;
+    }
+
+    // Settings collection: Partner referral URLs
+    match /settings/{docId} {
+      allow read, write: if true;
+    }
+
+    // Partner Platforms collection: Lending platforms & verified bank/NBFC lists
+    match /partner_platforms/{platformId} {
+      allow read, write: if true;
+    }
+
+    // Loan Options collection: Configurable loan products
+    match /loan_options/{optionId} {
+      allow read, write: if true;
+    }
+  }
+}

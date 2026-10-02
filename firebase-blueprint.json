@@ -1,0 +1,307 @@
+{
+  "entities": {
+    "Customer": {
+      "title": "Customer",
+      "description": "Registered customer or lead record",
+      "type": "object",
+      "properties": {
+        "customerId": { "type": "string", "description": "Unique customer ID" },
+        "fullName": { "type": "string", "description": "Full name of customer" },
+        "mobileNumber": { "type": "string", "description": "10-digit mobile number" },
+        "email": { "type": "string", "description": "Customer email address" },
+        "loanCategory": { "type": "string", "description": "Loan category applied for" },
+        "amountRequested": { "type": "number", "description": "Loan amount requested" },
+        "employmentType": { "type": "string", "description": "Employment type" },
+        "monthlyIncome": { "type": "number", "description": "Monthly income" },
+        "city": { "type": "string", "description": "City of residence" },
+        "status": { "type": "string", "description": "Customer verification status" },
+        "source": { "type": "string", "description": "web or mobile_app" },
+        "mobileVerified": { "type": "boolean", "description": "Whether mobile OTP was verified" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last updated timestamp" }
+      },
+      "required": ["customerId", "fullName", "mobileNumber", "createdAt", "updatedAt"]
+    },
+    "LoanApplication": {
+      "title": "LoanApplication",
+      "description": "Customer loan application record",
+      "type": "object",
+      "properties": {
+        "applicationId": { "type": "string", "description": "Unique application ID (e.g. FC-APP-XXXXX)" },
+        "customerId": { "type": "string", "description": "Associated customer ID" },
+        "fullName": { "type": "string", "description": "Applicant full name" },
+        "mobileNumber": { "type": "string", "description": "Applicant mobile number" },
+        "email": { "type": "string", "description": "Applicant email" },
+        "loanCategory": { "type": "string", "description": "Category of loan" },
+        "partnerName": { "type": "string", "description": "NBFC lending partner" },
+        "destinationUrl": { "type": "string", "description": "Partner portal URL" },
+        "status": { "type": "string", "description": "Tracking status" },
+        "panMasked": { "type": "string", "description": "Masked PAN card number" },
+        "dob": { "type": "string", "description": "Date of Birth YYYY-MM-DD" },
+        "pincode": { "type": "string", "description": "6-digit postal code" },
+        "existingLoan": { "type": "string", "description": "Existing loan status" },
+        "selectedOptionId": { "type": "string", "description": "ID of selected loan option" },
+        "selectedOptionName": { "type": "string", "description": "Name of selected loan option" },
+        "isDuplicate": { "type": "boolean", "description": "Whether duplicate lead" },
+        "amountRequested": { "type": "number", "description": "Amount requested" },
+        "employmentType": { "type": "string", "description": "Employment type" },
+        "monthlyIncome": { "type": "number", "description": "Monthly income" },
+        "city": { "type": "string", "description": "City" },
+        "source": { "type": "string", "description": "Submission source" },
+        "submittedAt": { "type": "string", "format": "date-time", "description": "Submission timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last updated timestamp" }
+      },
+      "required": ["applicationId", "fullName", "mobileNumber", "loanCategory", "submittedAt", "updatedAt"]
+    },
+    "LoanOption": {
+      "title": "LoanOption",
+      "description": "Configurable loan product/lender option",
+      "type": "object",
+      "properties": {
+        "optionId": { "type": "string", "description": "Unique option ID" },
+        "name": { "type": "string", "description": "Option name" },
+        "category": { "type": "string", "description": "Loan category" },
+        "partnerName": { "type": "string", "description": "Partner / Lender name" },
+        "applicationUrl": { "type": "string", "description": "External referral/application URL" },
+        "loanAmountRange": { "type": "string", "description": "Approximate amount range" },
+        "tenureRange": { "type": "string", "description": "Tenure range" },
+        "description": { "type": "string", "description": "Detailed explanation" },
+        "eligibilityInfo": { "type": "array", "items": { "type": "string" }, "description": "Eligibility criteria" },
+        "requiredDocuments": { "type": "array", "items": { "type": "string" }, "description": "Required documents" },
+        "importantTerms": { "type": "string", "description": "Important compliance & approval terms" },
+        "isActive": { "type": "boolean", "description": "Whether option is visible" },
+        "displayOrder": { "type": "number", "description": "Sort order" }
+      },
+      "required": ["optionId", "name", "category", "partnerName", "applicationUrl"]
+    },
+    "Banner": {
+      "title": "Banner",
+      "description": "Homepage promotional banner",
+      "type": "object",
+      "properties": {
+        "bannerId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "buttonText": { "type": "string" },
+        "destinationUrl": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "displayOrder": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["bannerId", "title", "destinationUrl", "imageUrl"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Global partner referral links and platform settings",
+      "type": "object",
+      "properties": {
+        "choiceConnectPersonalLoanUrl": { "type": "string" },
+        "personalBusinessLoanUrl": { "type": "string" },
+        "instantLoanUrl": { "type": "string" },
+        "allTypeLoanUrl": { "type": "string" },
+        "safeUpiUrl": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "PartnerPlatform": {
+      "title": "PartnerPlatform",
+      "description": "Lending partner distribution platform with verified bank/NBFC partner institutions",
+      "type": "object",
+      "properties": {
+        "platformId": { "type": "string", "description": "Unique platform identifier" },
+        "name": { "type": "string", "description": "Platform name" },
+        "description": { "type": "string", "description": "Platform description" },
+        "partnerNetworkSummary": { "type": "string", "description": "Partner network summary text" },
+        "personalLoanUrl": { "type": "string", "description": "Configured Personal Loan application URL" },
+        "businessLoanUrl": { "type": "string", "description": "Configured Business Loan application URL" },
+        "supportedCategories": { "type": "array", "items": { "type": "string" } },
+        "isCompleteLenderListAvailable": { "type": "boolean" },
+        "lenderNetworkDisclaimer": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "displayOrder": { "type": "number" }
+      },
+      "required": ["platformId", "name", "personalLoanUrl"]
+    },
+    "CibilOrder": {
+      "title": "CibilOrder",
+      "description": "Customer CIBIL score improvement orders with UPI UTR verification",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string", "description": "Unique order identifier" },
+        "referenceNumber": { "type": "string", "description": "Human readable tracking reference number (e.g. CIB-2026-XXXX)" },
+        "customerId": { "type": "string", "description": "Customer ID" },
+        "fullName": { "type": "string", "description": "Customer full name" },
+        "mobileNumber": { "type": "string", "description": "10-digit mobile number" },
+        "email": { "type": "string", "description": "Customer email address" },
+        "panNumber": { "type": "string", "description": "Customer PAN card number" },
+        "currentScoreEstimate": { "type": "string", "description": "Estimated current CIBIL score or issue" },
+        "utrNumber": { "type": "string", "description": "12-digit UPI Transaction Reference Number" },
+        "amount": { "type": "number", "description": "Payment amount in INR (299)" },
+        "status": { "type": "string", "description": "Status: pending_verification | confirmed | rejected" },
+        "loanLink": { "type": "string", "description": "Branch partner loan link" },
+        "adminNotes": { "type": "string", "description": "Notes by admin" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "confirmedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orderId", "referenceNumber", "fullName", "mobileNumber", "utrNumber", "amount", "status", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Customer in-app and web notification alert",
+      "type": "object",
+      "properties": {
+        "notificationId": { "type": "string" },
+        "customerId": { "type": "string" },
+        "mobileNumber": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "link": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["notificationId", "title", "message", "createdAt"]
+    },
+    "ReferralProfile": {
+      "title": "ReferralProfile",
+      "description": "Customer referral profile with verified payout bank details and unique referral code",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "fullName": { "type": "string" },
+        "mobileNumber": { "type": "string" },
+        "referralCode": { "type": "string" },
+        "referralLink": { "type": "string" },
+        "bankName": { "type": "string" },
+        "accountNumberMasked": { "type": "string" },
+        "accountNumber": { "type": "string" },
+        "ifscCode": { "type": "string" },
+        "isActivated": { "type": "boolean" },
+        "totalEarned": { "type": "number" },
+        "pendingRewards": { "type": "number" },
+        "paidRewards": { "type": "number" },
+        "activatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "referralCode", "bankName", "accountNumber", "ifscCode", "isActivated"]
+    },
+    "AppReward": {
+      "title": "AppReward",
+      "description": "First-time Navi App download reward: Send ₹1 -> Return ₹101",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "mobileNumber": { "type": "string" },
+        "status": { "type": "string" },
+        "naviLinkClicked": { "type": "boolean" },
+        "paymentReference": { "type": "string" },
+        "rewardAmount": { "type": "number" },
+        "totalReturn": { "type": "number" },
+        "claimedAt": { "type": "string", "format": "date-time" },
+        "verifiedAt": { "type": "string", "format": "date-time" },
+        "paidAt": { "type": "string", "format": "date-time" },
+        "adminNotes": { "type": "string" }
+      },
+      "required": ["id", "userId", "mobileNumber", "status"]
+    },
+    "LoanReferral": {
+      "title": "LoanReferral",
+      "description": "Loan referral tracking record: ₹200 on primary disbursal, ₹150 on secondary",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "referrerUserId": { "type": "string" },
+        "referrerName": { "type": "string" },
+        "referralCode": { "type": "string" },
+        "referredCustomerId": { "type": "string" },
+        "referredCustomerName": { "type": "string" },
+        "referredCustomerMobile": { "type": "string" },
+        "applicationId": { "type": "string" },
+        "loanType": { "type": "string" },
+        "provider": { "type": "string" },
+        "applicationStatus": { "type": "string" },
+        "disbursalStatus": { "type": "string" },
+        "disbursalDate": { "type": "string", "format": "date-time" },
+        "disbursalAmount": { "type": "number" },
+        "rewardAmount": { "type": "number" },
+        "rewardTier": { "type": "string" },
+        "payoutDeadline": { "type": "string", "format": "date-time" },
+        "payoutStatus": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "referrerUserId", "referredCustomerMobile", "payoutStatus"]
+    },
+    "Payout": {
+      "title": "Payout",
+      "description": "Disbursement record for app reward or loan referral earning",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "rewardType": { "type": "string" },
+        "amount": { "type": "number" },
+        "bankName": { "type": "string" },
+        "accountNumber": { "type": "string" },
+        "ifscCode": { "type": "string" },
+        "status": { "type": "string" },
+        "transactionId": { "type": "string" },
+        "deadline": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "paidAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "rewardType", "amount", "status"]
+    }
+  },
+  "firestore": {
+    "customers": {
+      "entity": "Customer",
+      "description": "Collection of all customer and lead records"
+    },
+    "applications": {
+      "entity": "LoanApplication",
+      "description": "Collection of all customer loan applications"
+    },
+    "cibil_orders": {
+      "entity": "CibilOrder",
+      "description": "Collection of CIBIL score improvement orders"
+    },
+    "notifications": {
+      "entity": "Notification",
+      "description": "Collection of customer alerts and system notifications"
+    },
+    "referral_profiles": {
+      "entity": "ReferralProfile",
+      "description": "Collection of user referral accounts and bank details"
+    },
+    "app_rewards": {
+      "entity": "AppReward",
+      "description": "Collection of app download rewards"
+    },
+    "loan_referrals": {
+      "entity": "LoanReferral",
+      "description": "Collection of loan referral attributions and disbursal rewards"
+    },
+    "payouts": {
+      "entity": "Payout",
+      "description": "Collection of payout transfers and verification"
+    },
+    "partner_platforms": {
+      "entity": "PartnerPlatform",
+      "description": "Collection of verified partner distribution platforms and lending institutions"
+    },
+    "loan_options": {
+      "entity": "LoanOption",
+      "description": "Collection of configurable loan options"
+    },
+    "banners": {
+      "entity": "Banner",
+      "description": "Collection of promotional banners"
+    },
+    "settings": {
+      "entity": "Settings",
+      "description": "Platform settings document"
+    }
+  }
+}

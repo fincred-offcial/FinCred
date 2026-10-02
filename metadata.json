@@ -1,0 +1,6 @@
+{
+  "name": "FinCred – Explore Loan Options Online",
+  "description": "FINCRED digital loan assistance platform with standalone native-style mobile app and web portal, connecting users with RBI-registered NBFC lenders.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

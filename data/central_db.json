@@ -1,0 +1,92 @@
+{
+  "customers": [
+    {
+      "customerId": "cust-101",
+      "fullName": "Rahul Sharma",
+      "mobileNumber": "9876543210",
+      "mobileVerified": true,
+      "createdAt": "2026-09-09T13:07:51.689Z",
+      "updatedAt": "2026-09-09T13:07:51.689Z"
+    },
+    {
+      "customerId": "cust-102",
+      "fullName": "Priya Verma",
+      "mobileNumber": "9812345678",
+      "mobileVerified": true,
+      "createdAt": "2026-09-11T13:07:51.689Z",
+      "updatedAt": "2026-09-11T13:07:51.689Z"
+    }
+  ],
+  "applications": [
+    {
+      "applicationId": "FC-APP-88421",
+      "customerId": "cust-101",
+      "fullName": "Rahul Sharma",
+      "mobileNumber": "9876543210",
+      "loanCategory": "Personal / Business Loan",
+      "partnerName": "WeRize Financial Partner",
+      "destinationUrl": "https://www.werize.com/loan-saving-agent-unnao-FinCred-personal-loan-3LIBPj40asdAPudzvFhPdU",
+      "status": "Redirected to Partner",
+      "submittedAt": "2026-09-10T13:07:51.689Z",
+      "updatedAt": "2026-09-10T13:07:51.689Z",
+      "panMasked": "ABCDE****F"
+    },
+    {
+      "applicationId": "FC-APP-92140",
+      "customerId": "cust-102",
+      "fullName": "Priya Verma",
+      "mobileNumber": "9812345678",
+      "loanCategory": "Instant Loan",
+      "partnerName": "TrueBalance Partner",
+      "destinationUrl": "https://truebalance.onelink.me/bMoN/dlfim5uk",
+      "status": "Request Submitted",
+      "submittedAt": "2026-09-12T01:07:51.689Z",
+      "updatedAt": "2026-09-12T01:07:51.689Z",
+      "panMasked": "XYZPQ****K"
+    }
+  ],
+  "banners": [
+    {
+      "bannerId": "banner-01",
+      "title": "Instant Personal Loan – Apply Online",
+      "description": "Check your eligibility and explore personal loan options through FinCred’s lending partner.",
+      "buttonText": "Check Eligibility",
+      "destinationUrl": "https://dukaan.werize.com/loan-saving-agent-unnao-FinCred-personal-loan-3LIBPj40asdAPudzvFhPdU",
+      "imageUrl": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=1200&q=80",
+      "isActive": true,
+      "displayOrder": 1,
+      "createdAt": "2026-09-14T22:00:00.000Z"
+    },
+    {
+      "bannerId": "banner-02",
+      "title": "All Loan Types – Explore Your Options",
+      "description": "Explore Personal Loan, Business Loan, Home Loan, LAP and Education Loan options through FinCred.",
+      "buttonText": "Explore Loans",
+      "destinationUrl": "https://sdk.ruloans.com/?client_type=b2b_app&loan_type=personal_loan&auth_token=586994%7Cl5C67vJQndNESetPp7pcWqcejaZd4iN3VtJZLPKze6dedf38",
+      "imageUrl": "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1200&q=80",
+      "isActive": true,
+      "displayOrder": 2,
+      "createdAt": "2026-09-14T22:00:00.000Z"
+    },
+    {
+      "bannerId": "banner-03",
+      "title": "Instant Personal Loan – Quick & Easy",
+      "description": "Explore personal loan options through FinCred and its lending partner.",
+      "buttonText": "Check Eligibility",
+      "destinationUrl": "https://truebalance.onelink.me/bMoN/dlfim5uk",
+      "imageUrl": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80",
+      "isActive": true,
+      "displayOrder": 3,
+      "createdAt": "2026-09-14T22:00:00.000Z"
+    }
+  ],
+  "settings": {
+    "choiceConnectPersonalLoanUrl": "https://choiceconnect.in/referral/loan/personal-loan/QzAxMTkyOTg=?lead_source=Y29ubmVjdF9yZWZlcnJhbF9saW5r",
+    "personalBusinessLoanUrl": "https://www.werize.com/loan-saving-agent-unnao-FinCred-personal-loan-3LIBPj40asdAPudzvFhPdU",
+    "instantLoanUrl": "https://truebalance.onelink.me/bMoN/dlfim5uk",
+    "allTypeLoanUrl": "https://sdk.ruloans.com/?client_type=b2b_app&loan_type=personal_loan&auth_token=586994%7Cl5C67vJQndNESetPp7pcWqcejaZd4iN3VtJZLPKze6dedf38",
+    "safeUpiUrl": "https://r.navi.com/t3HqoB",
+    "updatedAt": "2026-09-12T13:07:51.688Z"
+  },
+  "otps": {}
+}
