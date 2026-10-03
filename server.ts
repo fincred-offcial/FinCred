@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import crypto from 'crypto';
@@ -6,7 +7,7 @@ import { createServer as createViteServer } from 'vite';
 import { firestoreDb } from './server/firestoreDb.js';
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // Admin credentials from environment with secure defaults
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'FIN-CRED';
@@ -16,9 +17,10 @@ const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || 'fincred-production-secret-
 // In-memory active admin sessions
 const activeAdminTokens = new Set<string>();
 
-// Middleware
+// Middleware: CORS & Body Parsing
+const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Origin', CORS_ORIGIN);
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   if (req.method === 'OPTIONS') {
@@ -29,10 +31,14 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static uploads directory
-const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads');
+// Static uploads directory (configurable via UPLOADS_DIR env variable)
+const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(process.cwd(), 'public', 'uploads');
 if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  try {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  } catch (e) {
+    console.warn('Could not create UPLOADS_DIR, using fallback:', e);
+  }
 }
 app.use('/uploads', express.static(UPLOADS_DIR));
 
@@ -59,7 +65,9 @@ function requireAdmin(req: Request, res: Response, next: NextFunction) {
 
 // Health check
 app.get('/api/health', (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
   res.json({
+    success: true,
     status: 'ok',
     timestamp: new Date().toISOString(),
     service: 'FinCred Central Cloud API'
@@ -406,7 +414,7 @@ app.post('/api/applications/:applicationId/select-partner', async (req: Request,
     }
 
     if (!resolvedUrl) {
-      resolvedUrl = app.destinationUrl || 'https://fincred.ai.studio';
+      resolvedUrl = app.destinationUrl || process.env.APP_BASE_URL || '/';
     }
 
     // Record partner selection in single source of truth
@@ -1902,20 +1910,74 @@ app.delete('/api/admin/activities', requireAdmin, async (req: Request, res: Resp
 });
 
 // ==========================================
+// API 404 & ERROR HANDLING (JSON GUARANTEE)
+// ==========================================
+
+// Explicit JSON 404 handler for any unhandled /api/* endpoint - NEVER returns HTML
+app.all('/api/*', (req: Request, res: Response) => {
+  res.status(404).setHeader('Content-Type', 'application/json').json({
+    success: false,
+    error: {
+      code: 'NOT_FOUND',
+      message: `API endpoint ${req.method} ${req.path} not found`
+    }
+  });
+});
+
+// Global API error handler for any unhandled errors - NEVER returns HTML stack traces
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  if (req.originalUrl?.startsWith('/api') || req.path?.startsWith('/api')) {
+    console.error(`[API Uncaught Error] ${req.method} ${req.originalUrl}:`, err);
+    return res.status(err.status || 500).setHeader('Content-Type', 'application/json').json({
+      success: false,
+      error: {
+        code: err.code || 'INTERNAL_SERVER_ERROR',
+        message: err.message || 'An unexpected server error occurred'
+      }
+    });
+  }
+  next(err);
+});
+
+// ==========================================
 // VITE & STATIC SERVING INTEGRATION
 // ==========================================
 async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV === 'production') {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+
+    // Client-side SPA routing fallback for non-API routes
+    app.get('*', (req: Request, res: Response) => {
+      if (req.path.startsWith('/api')) {
+        return res.status(404).setHeader('Content-Type', 'application/json').json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: `API endpoint ${req.method} ${req.path} not found`
+          }
+        });
+      }
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  } else {
     const vite = await createViteServer({
       server: { middlewareMode: true, hmr: false },
       appType: 'spa'
     });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req: Request, res: Response) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+
+    // In dev mode, block Vite SPA fallback from answering API routes with index.html
+    app.use((req, res, next) => {
+      if (req.path.startsWith('/api')) {
+        return res.status(404).setHeader('Content-Type', 'application/json').json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: `API endpoint ${req.method} ${req.path} not found`
+          }
+        });
+      }
+      vite.middlewares(req, res, next);
     });
   }
 

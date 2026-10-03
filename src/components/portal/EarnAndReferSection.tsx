@@ -164,8 +164,10 @@ export const EarnAndReferSection: React.FC<EarnAndReferSectionProps> = ({ custom
   // Copy Referral Link
   const handleCopyLink = () => {
     if (!profile?.referralCode) return;
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://fincred.ai.studio';
-    const link = `${origin}/?ref=${profile.referralCode}`;
+    const origin = (typeof window !== 'undefined' && window.location.origin)
+      ? window.location.origin
+      : (import.meta.env.VITE_APP_BASE_URL || '');
+    const link = origin ? `${origin}/?ref=${profile.referralCode}` : `/?ref=${profile.referralCode}`;
     navigator.clipboard.writeText(link);
     setIsCopiedLink(true);
     setTimeout(() => setIsCopiedLink(false), 2500);
@@ -174,8 +176,10 @@ export const EarnAndReferSection: React.FC<EarnAndReferSectionProps> = ({ custom
   // Share via WhatsApp
   const handleShareWhatsApp = () => {
     if (!profile?.referralCode) return;
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://fincred.ai.studio';
-    const link = `${origin}/?ref=${profile.referralCode}`;
+    const origin = (typeof window !== 'undefined' && window.location.origin)
+      ? window.location.origin
+      : (import.meta.env.VITE_APP_BASE_URL || '');
+    const link = origin ? `${origin}/?ref=${profile.referralCode}` : `/?ref=${profile.referralCode}`;
     const text = `Namaste! 🇮🇳 Urgent cash loan chahiye bina kisi pareshani ke? FinCred par instant ₹10,000 se ₹20 Lakh tak ka loan approve karwayein lowest interest rate par. 
 
 Aapke liye direct link:

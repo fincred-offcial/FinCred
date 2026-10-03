@@ -1,4 +1,5 @@
 import { ActivityLog } from '../types.js';
+import { safeFetch } from './apiClient.js';
 
 export interface DeviceMetadata {
   deviceType: 'Mobile' | 'Tablet' | 'Desktop';
@@ -117,7 +118,7 @@ export async function trackUserActivity(params: {
 }): Promise<void> {
   try {
     const meta = getClientDeviceMetadata();
-    await fetch('/api/activity', {
+    await safeFetch('/api/activity', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -1472,7 +1472,7 @@ class FirestoreCentralDatabase {
         amountRequested: amount,
         employmentType: params.employmentType || 'Salaried',
         monthlyIncome: params.monthlyIncome ? Number(params.monthlyIncome) : 35000,
-        destinationUrl: 'https://fincred.ai.studio',
+        destinationUrl: process.env.APP_BASE_URL || '/',
         partnerName: 'FinCred Central Partner Network',
         status: 'DETAILS SUBMITTED',
         externalApplicationStatus: 'Profile Completed - Details Submitted',
@@ -2621,7 +2621,8 @@ class FirestoreCentralDatabase {
       code = `FIN${Date.now().toString().slice(-6)}`;
     }
 
-    const referralLink = `https://fincred.ai.studio/?ref=${code}`;
+    const appBaseUrl = (process.env.APP_BASE_URL || '').replace(/\/+$/, '');
+    const referralLink = appBaseUrl ? `${appBaseUrl}/?ref=${code}` : `/?ref=${code}`;
 
     const profile: ReferralProfile = {
       userId: data.userId,

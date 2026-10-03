@@ -1,4 +1,9 @@
 import { Banner, Customer, LoanApplication, AdminSettings, AdminStats, LoanCategory, ApplicationStatus, LoanProduct, ActivityLog, LoanOption, PartnerPlatform, PartnerLender, ApplicationDocument, CustomerNotification, CibilOrder, ReferralProfile, AppReward, LoanReferral, Payout, EarnSettings } from '../types.js';
+import { safeFetch, apiRequest, api, ApiError } from './apiClient.js';
+
+// Central API safety wrapper: ensures all calls resolve base URL and never crash on non-JSON HTML responses
+const fetch = safeFetch;
+export { safeFetch, apiRequest, api, ApiError };
 
 export const DEFAULT_BANNERS: Banner[] = [
   {

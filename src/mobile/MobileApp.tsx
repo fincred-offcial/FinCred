@@ -16,6 +16,7 @@ import { MobileOfflineScreen } from './components/MobileOfflineScreen.js';
 import { useOnlineStatus } from '../hooks/useOnlineStatus.js';
 import { LoanProduct, LoanApplication } from '../types.js';
 import { appFetchMyApplications } from '../services/api.js';
+import { safeFetch } from '../services/apiClient.js';
 import { InstantLoanModal } from '../components/InstantLoanModal.js';
 import { useAuth } from '../context/AuthContext.js';
 
@@ -107,7 +108,7 @@ const MobileAppInner: React.FC = () => {
       return false;
     }
     try {
-      const res = await fetch('/api/health', { cache: 'no-store' });
+      const res = await safeFetch('/api/health', { cache: 'no-store' });
       if (res.ok) {
         setIsOnlineOverride(true);
         return true;
