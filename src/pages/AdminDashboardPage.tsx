@@ -103,6 +103,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [customerSearch, setCustomerSearch] = useState('');
   const [appSearch, setAppSearch] = useState('');
   const [appStatusFilter, setAppStatusFilter] = useState<string>('ALL');
+  const [appSourceFilter, setAppSourceFilter] = useState<'ALL' | 'mobile_app' | 'web'>('ALL');
   const [cibilSearch, setCibilSearch] = useState('');
   const [cibilStatusFilter, setCibilStatusFilter] = useState<'ALL' | 'pending_verification' | 'confirmed' | 'rejected'>('ALL');
 
@@ -410,6 +411,8 @@ export const AdminDashboardPage: React.FC = () => {
 
   const filteredApplications = applications.filter(a => {
     if (appStatusFilter !== 'ALL' && a.status !== appStatusFilter) return false;
+    if (appSourceFilter === 'mobile_app' && a.source !== 'mobile_app') return false;
+    if (appSourceFilter === 'web' && a.source === 'mobile_app') return false;
     if (!appSearch.trim()) return true;
     const q = appSearch.toLowerCase();
     return (
@@ -645,8 +648,13 @@ export const AdminDashboardPage: React.FC = () => {
                 <p className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
                   {applications.length}
                 </p>
-                <div className="flex items-center gap-1 text-[11px] text-blue-600 font-bold">
-                  <span>Across all 8 Partners</span>
+                <div className="flex items-center gap-2 text-[10px] font-bold">
+                  <span className="text-cyan-700 bg-cyan-50 px-1.5 py-0.2 rounded border border-cyan-200">
+                    📱 {applications.filter(a => a.source === 'mobile_app').length} App
+                  </span>
+                  <span className="text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200">
+                    🌐 {applications.filter(a => a.source !== 'mobile_app').length} Web
+                  </span>
                 </div>
               </div>
 
@@ -1072,34 +1080,82 @@ export const AdminDashboardPage: React.FC = () => {
         {!isLoading && activeTab === 'applications' && (
           <div className="space-y-4">
             
-            {/* Search & Status Filter */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="relative flex-1 max-w-md">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={appSearch}
-                  onChange={e => setAppSearch(e.target.value)}
-                  placeholder="Search applicants, mobile, application ID..."
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 focus:border-blue-500 outline-none shadow-2xs"
-                />
+            {/* Search & Status & Origin Filters */}
+            <div className="space-y-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={appSearch}
+                    onChange={e => setAppSearch(e.target.value)}
+                    placeholder="Search applicants, mobile, application ID..."
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 focus:border-blue-500 outline-none shadow-2xs"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                  {(['ALL', 'NEW', 'UNDER REVIEW', 'APPROVED', 'REJECTED'] as const).map(st => (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => setAppStatusFilter(st)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        appStatusFilter === st
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      {st === 'ALL' ? 'All Statuses' : st}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                {(['ALL', 'NEW', 'UNDER REVIEW', 'APPROVED', 'REJECTED'] as const).map(st => (
-                  <button
-                    key={st}
-                    type="button"
-                    onClick={() => setAppStatusFilter(st)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      appStatusFilter === st
-                        ? 'bg-blue-600 text-white shadow-xs'
-                        : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-                    }`}
-                  >
-                    {st === 'ALL' ? 'All Leads' : st}
-                  </button>
-                ))}
+              {/* Source Filter (Mobile App vs Website) */}
+              <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-200/80">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+                  Filter by Origin:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAppSourceFilter('ALL')}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    appSourceFilter === 'ALL'
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                  }`}
+                >
+                  All Sources ({applications.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAppSourceFilter('mobile_app')}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    appSourceFilter === 'mobile_app'
+                      ? 'bg-cyan-600 text-white shadow-xs'
+                      : 'bg-cyan-50 text-cyan-800 hover:bg-cyan-100 border border-cyan-200'
+                  }`}
+                >
+                  <span>📱 Mobile App</span>
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-cyan-700 text-white font-mono font-bold">
+                    {applications.filter(a => a.source === 'mobile_app').length}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAppSourceFilter('web')}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    appSourceFilter === 'web'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-200'
+                  }`}
+                >
+                  <span>🌐 Website Portal</span>
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-blue-700 text-white font-mono font-bold">
+                    {applications.filter(a => a.source !== 'mobile_app').length}
+                  </span>
+                </button>
               </div>
             </div>
 
@@ -1110,6 +1166,7 @@ export const AdminDashboardPage: React.FC = () => {
                   <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                     <tr>
                       <th className="p-3.5">Lead ID</th>
+                      <th className="p-3.5">Origin</th>
                       <th className="p-3.5">Customer</th>
                       <th className="p-3.5">Category & Amount</th>
                       <th className="p-3.5">Partner</th>
@@ -1120,8 +1177,8 @@ export const AdminDashboardPage: React.FC = () => {
                   <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
                     {filteredApplications.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-8 text-center text-slate-400">
-                          No loan applications found.
+                        <td colSpan={7} className="p-8 text-center text-slate-400">
+                          No loan applications found matching criteria.
                         </td>
                       </tr>
                     ) : (
@@ -1132,6 +1189,20 @@ export const AdminDashboardPage: React.FC = () => {
                             <span className="text-[10px] text-slate-400">
                               {new Date(app.submittedAt).toLocaleDateString()}
                             </span>
+                          </td>
+
+                          <td className="p-3.5">
+                            {app.source === 'mobile_app' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-cyan-100 text-cyan-900 border border-cyan-300 shadow-2xs">
+                                <span>📱</span>
+                                <span>Mobile App</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-800 border border-blue-200 shadow-2xs">
+                                <span>🌐</span>
+                                <span>Website</span>
+                              </span>
+                            )}
                           </td>
 
                           <td className="p-3.5">
@@ -1619,6 +1690,30 @@ export const AdminDashboardPage: React.FC = () => {
                 <span className="text-[10px] text-slate-400">Employment:</span>
                 <p className="text-slate-700">{activeLeadModal.employmentType || 'Salaried'}</p>
               </div>
+              <div>
+                <span className="text-[10px] text-slate-400">Application Origin:</span>
+                <p className="font-bold flex items-center gap-1">
+                  {activeLeadModal.source === 'mobile_app' ? (
+                    <span className="text-cyan-800 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-300">
+                      📱 FinCred Mobile App (PWA)
+                    </span>
+                  ) : (
+                    <span className="text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                      🌐 FinCred Website Portal
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400">Partner Platform:</span>
+                <p className="font-semibold text-slate-900">{activeLeadModal.partnerName || 'FinCred Direct'}</p>
+              </div>
+              {activeLeadModal.city && (
+                <div>
+                  <span className="text-[10px] text-slate-400">City / Location:</span>
+                  <p className="text-slate-700">{activeLeadModal.city}</p>
+                </div>
+              )}
             </div>
 
             <div className="pt-3 border-t flex justify-end gap-2">

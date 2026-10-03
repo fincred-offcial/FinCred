@@ -56,179 +56,81 @@ export const Navbar: React.FC<NavbarProps> = ({ onExploreLoanOptions, onOpenDown
           isScrolled ? 'h-16' : 'h-16 sm:h-20'
         }`}>
           {/* Left: Brand Identity */}
-          <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group" id="nav-brand-logo">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 p-[1.5px] shadow-sm">
+          <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0" id="nav-brand-logo">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 p-[1.5px] shadow-xs">
               <div className="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 group-hover:scale-105 transition-transform" />
+                <ShieldCheck className="w-5 h-5 text-blue-600 group-hover:scale-105 transition-transform" />
               </div>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 font-['Outfit',sans-serif]">
-                  Fin<span className="text-blue-600">Cred</span>
+                <span className="text-lg sm:text-xl font-black tracking-tight font-['Outfit',sans-serif]">
+                  <span className="text-blue-600">Fin</span>
+                  <span className="text-slate-900">Cred</span>
                 </span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 border border-blue-200 text-blue-700 tracking-wider">
+                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full border border-blue-400 text-blue-700 tracking-wider">
                   INDIA
                 </span>
               </div>
-              <p className="text-[10px] text-slate-500 font-semibold tracking-wide">Loan Made Simple</p>
+              <p className="text-[10px] text-slate-500 font-semibold tracking-wide -mt-0.5">Loan Made Simple</p>
             </div>
           </Link>
 
-          {/* Center / Security Badge Pill */}
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50/80 border border-blue-200/80 text-blue-700 text-xs font-bold shadow-2xs">
-            <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-            <span>Safe • Secure • 100% Digital</span>
-          </div>
+          {/* Desktop Right Action Area */}
+          <div className="hidden lg:flex items-center gap-2">
+            {/* 1. Earn ₹ Button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (isCustomerLoggedIn) {
+                  navigate('/dashboard?tab=earn');
+                } else {
+                  navigate('/login');
+                }
+              }}
+              id="desktop-nav-earn-btn"
+              className="px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 border border-amber-300 text-amber-900 text-xs font-black shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Refer & Earn Rewards"
+            >
+              <span className="w-4 h-4 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] flex items-center justify-center">₹</span>
+              <span>Earn ₹</span>
+              <span className="text-[9px] font-bold px-1 py-0.2 rounded bg-amber-200/80 text-amber-950">₹300+</span>
+            </button>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1.5">
-            {isCustomerLoggedIn ? (
-              <>
-                <Link
-                  to="/dashboard?tab=home"
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                    location.pathname === '/dashboard' && (!location.search || location.search.includes('tab=home'))
-                      ? 'text-blue-700 bg-blue-50'
-                      : 'text-slate-700 hover:text-blue-600 hover:bg-slate-50'
-                  }`}
-                >
-                  Home
-                </Link>
-                <Link
-                  to="/dashboard?tab=options"
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                    location.pathname === '/dashboard' && location.search.includes('tab=options')
-                      ? 'text-blue-700 bg-blue-50'
-                      : 'text-slate-700 hover:text-blue-600 hover:bg-slate-50'
-                  }`}
-                >
-                  Loan Options
-                </Link>
-                <Link
-                  to="/dashboard?tab=applications"
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                    location.pathname === '/dashboard' && location.search.includes('tab=applications')
-                      ? 'text-blue-700 bg-blue-50'
-                      : 'text-slate-700 hover:text-blue-600 hover:bg-slate-50'
-                  }`}
-                >
-                  Applications
-                </Link>
-                {/* Center Golden Coin Instant Loans Button */}
-                <button
-                  type="button"
-                  onClick={openInstantLoanModal}
-                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-amber-950 text-xs font-black flex items-center gap-1.5 shadow-md shadow-amber-500/25 hover:scale-105 transition-all cursor-pointer border border-amber-300"
-                  title="Instant Loans (TrueBalance, Branch, Navi)"
-                >
-                  <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-amber-500 via-yellow-200 to-amber-400 flex items-center justify-center border border-amber-100 shadow-2xs animate-[spin_5s_linear_infinite]">
-                    <span className="text-[10px] font-serif font-black">₹</span>
-                  </div>
-                  <span>Instant Loans</span>
-                </button>
-                <Link
-                  to="/dashboard?tab=notifications"
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                    location.pathname === '/dashboard' && location.search.includes('tab=notifications')
-                      ? 'text-blue-700 bg-blue-50'
-                      : 'text-slate-700 hover:text-blue-600 hover:bg-slate-50'
-                  }`}
-                >
-                  Notifications
-                </Link>
-                <Link
-                  to="/dashboard?tab=profile"
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                    location.pathname === '/dashboard' && location.search.includes('tab=profile')
-                      ? 'text-blue-700 bg-blue-50'
-                      : 'text-slate-700 hover:text-blue-600 hover:bg-slate-50'
-                  }`}
-                >
-                  Profile
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/"
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                    location.pathname === '/'
-                      ? 'text-blue-700 bg-blue-50'
-                      : 'text-slate-700 hover:text-blue-600 hover:bg-slate-50'
-                  }`}
-                >
-                  Home
-                </Link>
-                <Link
-                  to="/login"
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-blue-600 hover:bg-blue-50 transition-colors"
-                >
-                  Sign Up / Login
-                </Link>
-              </>
-            )}
-          </nav>
-
-          {/* Right Action Buttons */}
-          <div className="hidden lg:flex items-center gap-2.5">
             {/* CIBIL Score Improve Button */}
             <button
               type="button"
               onClick={() => openCibilModal()}
               id="nav-cibil-improve-btn"
-              className="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-black text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 shadow-md shadow-emerald-500/20 transition-all flex items-center gap-1.5 cursor-pointer border border-emerald-400"
+              className="px-3 py-1.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer border border-emerald-400"
               title="CIBIL Score Improve (₹299 Only)"
             >
-              <TrendingUp className="w-4 h-4 text-amber-300" />
-              <span>CIBIL Improve</span>
-              <span className="text-[10px] font-black bg-amber-400 text-slate-950 px-1.5 py-0.2 rounded-full">₹299</span>
+              <TrendingUp className="w-3.5 h-3.5 text-amber-300" />
+              <span>CIBIL</span>
+              <span className="text-[9px] font-black bg-amber-400 text-slate-950 px-1.5 py-0.2 rounded-full">₹299</span>
             </button>
 
-            {/* Track Application Button */}
-            <button
-              type="button"
-              onClick={openTrackModal}
-              id="nav-track-app-btn"
-              className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:text-blue-600 bg-slate-50 hover:bg-slate-100 border border-slate-200/90 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-              title="Track Your Application"
-            >
-              <Search className="w-3.5 h-3.5 text-blue-600" />
-              <span>Track Application</span>
-            </button>
-
-            {/* Download App Action */}
+            {/* 2. App Download Button */}
             {onOpenDownloadApp && (
               <button
                 type="button"
                 onClick={onOpenDownloadApp}
-                id="nav-download-app-btn"
-                className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-blue-700 bg-blue-50/90 hover:bg-blue-100 border border-blue-200/90 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                id="desktop-nav-download-app-btn"
+                className="px-3 py-1.5 rounded-xl text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-all flex items-center gap-1 cursor-pointer"
                 title="FinCred App Download"
               >
                 <Download className="w-3.5 h-3.5 text-blue-600" />
-                <span>FinCred App Download</span>
+                <span>App</span>
               </button>
             )}
 
-            {/* Primary CTA: "Explore Loan Options" */}
-            <button
-              type="button"
-              onClick={handleExplore}
-              id="nav-primary-explore-btn"
-              className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center gap-1.5 cursor-pointer transition-all"
-            >
-              <span>Explore Loan Options</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Customer Session State */}
+            {/* 3. Login / Customer Session */}
             {isCustomerLoggedIn && customer ? (
               <div className="flex items-center gap-1.5">
                 <Link
-                  to="/profile"
+                  to="/dashboard?tab=home"
                   id="nav-btn-profile"
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 border border-slate-200 hover:bg-slate-200 text-slate-800 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 transition-colors"
                 >
                   <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-bold text-white">
                     {customer.fullName ? customer.fullName.charAt(0).toUpperCase() : 'U'}
@@ -239,57 +141,94 @@ export const Navbar: React.FC<NavbarProps> = ({ onExploreLoanOptions, onOpenDown
                   onClick={handleLogout}
                   id="nav-btn-logout"
                   title="Logout"
-                  className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 border border-slate-200 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 border border-slate-200 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <Link
-                  to="/login"
-                  id="nav-btn-login"
-                  className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 border border-slate-900 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                >
-                  <LogIn className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Login</span>
-                </Link>
-              </div>
+              <Link
+                to="/login"
+                id="nav-btn-login"
+                className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all flex items-center gap-1 cursor-pointer"
+              >
+                <LogIn className="w-3 h-3 text-emerald-400" />
+                <span>Login</span>
+              </Link>
             )}
+
+            {/* 4. Menu Toggle Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-xl text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200 cursor-pointer"
+              aria-label="Navigation Menu"
+            >
+              {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
           </div>
 
-          {/* Mobile Right Action Area */}
-          <div className="flex lg:hidden items-center gap-1.5">
+          {/* Mobile Right Action Area (Requirement 3: Earn ₹ | App | Login | Menu) */}
+          <div className="flex lg:hidden items-center gap-1 sm:gap-1.5">
+            {/* 1. Earn ₹ Button (Mobile) */}
+            <button
+              type="button"
+              onClick={() => {
+                if (isCustomerLoggedIn) {
+                  navigate('/dashboard?tab=earn');
+                } else {
+                  navigate('/login');
+                }
+              }}
+              id="mobile-nav-earn-btn"
+              className="px-2 py-1 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 text-amber-900 text-[11px] font-black shadow-2xs flex items-center gap-1 cursor-pointer active:scale-95"
+            >
+              <span className="w-3.5 h-3.5 rounded-full bg-amber-400 text-slate-950 font-black text-[9px] flex items-center justify-center">₹</span>
+              <span>Earn ₹</span>
+            </button>
+
+            {/* 2. App Button (Mobile) */}
             {onOpenDownloadApp && (
               <button
                 type="button"
                 onClick={onOpenDownloadApp}
                 id="mobile-nav-download-btn"
-                className="px-2 py-1.5 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 flex items-center gap-1 cursor-pointer"
-                title="📲 FinCred App Download Karein"
+                className="px-2 py-1 rounded-lg text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 flex items-center gap-1 cursor-pointer active:scale-95"
+                title="FinCred App"
               >
-                <Download className="w-3.5 h-3.5 text-blue-600" />
+                <Download className="w-3 h-3 text-blue-600" />
                 <span>App</span>
               </button>
             )}
 
-            {!isCustomerLoggedIn && (
+            {/* 3. Login Button (Mobile) */}
+            {isCustomerLoggedIn && customer ? (
+              <Link
+                to="/dashboard?tab=home"
+                id="mobile-nav-user-btn"
+                className="px-2 py-1 rounded-lg text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 flex items-center gap-1"
+              >
+                <User className="w-3 h-3" />
+                <span className="max-w-[45px] truncate">{customer.fullName.split(' ')[0]}</span>
+              </Link>
+            ) : (
               <Link
                 to="/login"
                 id="mobile-nav-login-btn"
-                className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-xs flex items-center gap-1"
+                className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-white bg-slate-900 hover:bg-slate-800 shadow-xs flex items-center gap-1"
               >
-                <LogIn className="w-3 h-3" />
+                <LogIn className="w-3 h-3 text-emerald-400" />
                 <span>Login</span>
               </Link>
             )}
+
+            {/* 4. Hamburger Menu (Mobile) */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               id="mobile-menu-toggle-btn"
-              className="p-2 rounded-xl text-slate-700 hover:text-slate-900 bg-slate-100 border border-slate-200 cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-700 hover:text-slate-900 bg-slate-100 border border-slate-200 cursor-pointer"
               aria-label="Toggle Navigation"
             >
-              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
           </div>
         </div>

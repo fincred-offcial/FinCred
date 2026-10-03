@@ -1,0 +1,32 @@
+{
+  "id": "/",
+  "name": "FinCred – Loan Platform",
+  "short_name": "FinCred",
+  "description": "FinCred Digital Loan Assistance & Referral Platform",
+  "theme_color": "#2563eb",
+  "background_color": "#070B14",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "/app",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

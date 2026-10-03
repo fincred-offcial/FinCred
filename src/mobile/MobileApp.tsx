@@ -20,7 +20,7 @@ import { InstantLoanModal } from '../components/InstantLoanModal.js';
 import { useAuth } from '../context/AuthContext.js';
 
 const MobileAppInner: React.FC = () => {
-  const { customer, token, logout } = useMobileAuth();
+  const { customer, token, logout, isLoading: isAuthLoading } = useMobileAuth();
   const { openInstantLoanModal } = useAuth();
   
   // Online / Offline Data Connection Detection
@@ -34,8 +34,24 @@ const MobileAppInner: React.FC = () => {
 
   // App phase: 'splash' | 'auth' | 'main'
   const [appPhase, setAppPhase] = useState<'splash' | 'auth' | 'main'>('splash');
-  const [currentTab, setCurrentTab] = useState<MobileTab>('home');
+  const [splashFinished, setSplashFinished] = useState(false);
+  const [currentTab, setCurrentTab] = useState<MobileTab>(() => {
+    try {
+      const saved = localStorage.getItem('fincred_active_mobile_tab') as MobileTab;
+      if (['home', 'loans', 'applications', 'profile'].includes(saved)) {
+        return saved;
+      }
+    } catch {}
+    return 'home';
+  });
   const [applicationsCount, setApplicationsCount] = useState<number>(0);
+
+  const handleTabChange = (tab: MobileTab) => {
+    setCurrentTab(tab);
+    try {
+      localStorage.setItem('fincred_active_mobile_tab', tab);
+    } catch {}
+  };
 
   // Apply modal state
   const [isApplyOpen, setIsApplyOpen] = useState(false);
@@ -50,23 +66,30 @@ const MobileAppInner: React.FC = () => {
     }
   }, [customer, appPhase, currentTab]);
 
-  const handleSplashComplete = () => {
-    if (customer && token) {
-      setAppPhase('main');
-    } else {
-      setAppPhase('auth');
+  // Handle splash completion with guaranteed login persistence check
+  useEffect(() => {
+    if (splashFinished && !isAuthLoading) {
+      if (customer && token) {
+        setAppPhase('main');
+      } else {
+        setAppPhase('auth');
+      }
     }
+  }, [splashFinished, isAuthLoading, customer, token]);
+
+  const handleSplashComplete = () => {
+    setSplashFinished(true);
   };
 
   const handleAuthSuccess = () => {
     setAppPhase('main');
-    setCurrentTab('home');
+    handleTabChange('home');
   };
 
   const handleLogout = async () => {
     await logout();
     setAppPhase('auth');
-    setCurrentTab('home');
+    handleTabChange('home');
   };
 
   const handleOpenApply = (product: LoanProduct | null) => {
@@ -101,9 +124,9 @@ const MobileAppInner: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#070B14] text-slate-100 flex flex-col items-center justify-start select-none font-sans overflow-x-hidden">
+    <div className="h-screen h-[100dvh] w-full bg-[#070B14] text-slate-100 flex flex-col items-center justify-start select-none font-sans overflow-hidden">
       {/* Mobile Application Canvas - Pure edge-to-edge native layout */}
-      <div className="w-full max-w-md min-h-screen bg-[#070B14] flex flex-col relative shadow-2xl">
+      <div className="w-full max-w-md h-full flex flex-col relative shadow-2xl overflow-hidden">
         
         {/* ====================================================== */}
         {/* VIEW 1: NATIVE APP SPLASH SCREEN */}
@@ -116,7 +139,7 @@ const MobileAppInner: React.FC = () => {
         {/* VIEW 2: AUTH SCREEN (OTP / LOGIN) */}
         {/* ====================================================== */}
         {appPhase === 'auth' && (
-          <div className="flex-1 flex flex-col overflow-y-auto">
+          <div className="flex-1 flex flex-col overflow-y-auto overscroll-contain">
             <MobileAuthScreen onSuccess={handleAuthSuccess} />
           </div>
         )}
@@ -125,9 +148,9 @@ const MobileAppInner: React.FC = () => {
         {/* VIEW 3: MAIN AUTHENTICATED APP */}
         {/* ====================================================== */}
         {appPhase === 'main' && (
-          <div className="flex-1 flex flex-col overflow-hidden relative">
+          <div className="flex-1 flex flex-col h-full overflow-hidden relative">
             {/* Native Mobile App Top Navigation Header */}
-            <header className="px-4 py-3 bg-[#0A0F1D]/95 backdrop-blur-md border-b border-slate-800/90 flex items-center justify-between z-20 shrink-0 sticky top-0">
+            <header className="px-4 py-3 bg-[#0A0F1D]/95 backdrop-blur-md border-b border-slate-800/90 flex items-center justify-between z-20 shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 p-0.5 shadow-sm">
                   <div className="w-full h-full bg-[#0A0F1D] rounded-[10px] flex items-center justify-center">
@@ -150,7 +173,7 @@ const MobileAppInner: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setCurrentTab('applications')}
+                  onClick={() => handleTabChange('applications')}
                   className="p-2 rounded-xl bg-slate-800/80 text-slate-300 hover:text-white cursor-pointer relative transition-colors"
                   title="My Applications"
                 >
@@ -162,7 +185,7 @@ const MobileAppInner: React.FC = () => {
 
                 <button
                   type="button"
-                  onClick={() => setCurrentTab('profile')}
+                  onClick={() => handleTabChange('profile')}
                   className="w-8 h-8 rounded-xl bg-blue-600/30 border border-blue-500/40 text-cyan-300 flex items-center justify-center font-bold text-xs cursor-pointer hover:border-blue-400 transition-colors"
                   title="My Profile"
                 >
@@ -172,12 +195,12 @@ const MobileAppInner: React.FC = () => {
             </header>
 
             {/* Scrollable Main Viewport */}
-            <main className="flex-1 overflow-y-auto px-4 pt-4 pb-20">
+            <main className="flex-1 overflow-y-auto overscroll-contain px-4 pt-4 pb-28">
               {currentTab === 'home' && (
                 <MobileHomeScreen
                   customer={customer}
                   onOpenApply={handleOpenApply}
-                  onNavigateTab={tab => setCurrentTab(tab)}
+                  onNavigateTab={tab => handleTabChange(tab)}
                 />
               )}
 
@@ -188,14 +211,14 @@ const MobileAppInner: React.FC = () => {
               {currentTab === 'applications' && (
                 <MobileApplicationsScreen
                   customer={customer}
-                  onNavigateToLoans={() => setCurrentTab('loans')}
+                  onNavigateToLoans={() => handleTabChange('loans')}
                 />
               )}
 
               {currentTab === 'profile' && (
                 <MobileProfileScreen
                   customer={customer}
-                  onNavigateToApplications={() => setCurrentTab('applications')}
+                  onNavigateToApplications={() => handleTabChange('applications')}
                   onLogoutConfirm={handleLogout}
                 />
               )}
@@ -204,7 +227,7 @@ const MobileAppInner: React.FC = () => {
             {/* Native Bottom Navigation Bar */}
             <MobileBottomNav
               currentTab={currentTab}
-              onChangeTab={setCurrentTab}
+              onChangeTab={handleTabChange}
               applicationsCount={applicationsCount}
               onOpenInstantLoans={openInstantLoanModal}
             />

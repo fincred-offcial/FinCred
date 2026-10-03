@@ -110,3 +110,26 @@
   background-color: #303030;
   opacity: 8%;
 }
+
+/* Mobile App Shell & Viewport Fixes (No pinch-zoom, no double-tap zoom, no horizontal scaling) */
+html, body {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overscroll-behavior-y: none;
+}
+
+/* Prevent iOS & Android browser auto-zoom when tapping inputs */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+/* Safe area insets for Android gesture bar and iOS notches */
+.safe-area-pb {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.safe-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+

@@ -519,8 +519,12 @@ export async function appGetMe(token: string): Promise<{ success: boolean; custo
   const res = await fetch('/api/app/auth/me', {
     headers: { Authorization: `Bearer ${token}` }
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to authenticate session');
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err: any = new Error(data.error || 'Failed to authenticate session');
+    err.status = res.status;
+    throw err;
+  }
   return data;
 }
 

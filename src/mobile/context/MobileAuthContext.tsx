@@ -24,24 +24,24 @@ const CUSTOMER_KEY = 'fincred_mobile_app_customer';
 export const MobileAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [customer, setCustomer] = useState<Customer | null>(() => {
     try {
-      const saved = localStorage.getItem(CUSTOMER_KEY);
+      const saved = localStorage.getItem(CUSTOMER_KEY) || localStorage.getItem('fc_customer');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
     }
   });
   const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem(TOKEN_KEY);
+    return localStorage.getItem(TOKEN_KEY) || localStorage.getItem('fc_cust_token');
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Validate session on mount
+  // Validate session on mount - do not logout on refresh or transient network errors
   useEffect(() => {
     let isMounted = true;
 
     async function initSession() {
-      const savedToken = localStorage.getItem(TOKEN_KEY);
+      const savedToken = localStorage.getItem(TOKEN_KEY) || localStorage.getItem('fc_cust_token');
       if (!savedToken) {
         if (isMounted) setIsLoading(false);
         return;
@@ -49,18 +49,26 @@ export const MobileAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       try {
         const res = await appGetMe(savedToken);
-        if (isMounted) {
+        if (isMounted && res.customer) {
           setCustomer(res.customer);
           localStorage.setItem(CUSTOMER_KEY, JSON.stringify(res.customer));
+          localStorage.setItem('fc_customer', JSON.stringify(res.customer));
+          localStorage.setItem(TOKEN_KEY, savedToken);
+          localStorage.setItem('fc_cust_token', savedToken);
         }
       } catch (err: any) {
-        console.warn('Session restoration failed:', err);
-        // If session expired or invalid, clear stored tokens
-        if (isMounted) {
-          localStorage.removeItem(TOKEN_KEY);
-          localStorage.removeItem(CUSTOMER_KEY);
-          setToken(null);
-          setCustomer(null);
+        console.warn('Session verification notice:', err);
+        // CRITICAL: Only clear tokens if the backend explicitly reports 401 or 403 (unauthorized/expired)!
+        // NEVER log the user out due to page refresh, network drop, or server restart.
+        if (err && (err.status === 401 || err.status === 403)) {
+          if (isMounted) {
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(CUSTOMER_KEY);
+            localStorage.removeItem('fc_cust_token');
+            localStorage.removeItem('fc_customer');
+            setToken(null);
+            setCustomer(null);
+          }
         }
       } finally {
         if (isMounted) setIsLoading(false);
@@ -83,6 +91,8 @@ export const MobileAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setCustomer(res.customer);
       localStorage.setItem(TOKEN_KEY, res.token);
       localStorage.setItem(CUSTOMER_KEY, JSON.stringify(res.customer));
+      localStorage.setItem('fc_cust_token', res.token);
+      localStorage.setItem('fc_customer', JSON.stringify(res.customer));
     } catch (err: any) {
       setError(err.message || 'Login failed');
       throw err;
@@ -106,6 +116,8 @@ export const MobileAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setCustomer(res.customer);
       localStorage.setItem(TOKEN_KEY, res.token);
       localStorage.setItem(CUSTOMER_KEY, JSON.stringify(res.customer));
+      localStorage.setItem('fc_cust_token', res.token);
+      localStorage.setItem('fc_customer', JSON.stringify(res.customer));
     } catch (err: any) {
       setError(err.message || 'Registration failed');
       throw err;
@@ -119,6 +131,8 @@ export const MobileAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setCustomer(cust);
     localStorage.setItem(TOKEN_KEY, tok);
     localStorage.setItem(CUSTOMER_KEY, JSON.stringify(cust));
+    localStorage.setItem('fc_cust_token', tok);
+    localStorage.setItem('fc_customer', JSON.stringify(cust));
     try {
       sessionStorage.setItem('fc_customer', JSON.stringify(cust));
       sessionStorage.setItem('fc_cust_token', tok);
@@ -131,6 +145,12 @@ export const MobileAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(CUSTOMER_KEY);
+    localStorage.removeItem('fc_cust_token');
+    localStorage.removeItem('fc_customer');
+    try {
+      sessionStorage.removeItem('fc_customer');
+      sessionStorage.removeItem('fc_cust_token');
+    } catch {}
     setToken(null);
     setCustomer(null);
     setError(null);
