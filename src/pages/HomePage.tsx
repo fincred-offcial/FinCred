@@ -46,9 +46,9 @@ export const HomePage: React.FC = () => {
     }
   };
 
-  // Handle Main Loan CTA (Requirement 7)
+  // Handle Main Hero CTA: Open Sign Up Option
   const handleCheckEligibility = () => {
-    openLoanModal('Personal Loan');
+    navigate('/Sign-up');
   };
 
   return (

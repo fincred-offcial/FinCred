@@ -129,6 +129,13 @@ export default defineConfig(() => {
           globPatterns: ['**/*.{js,css,html,svg,png,ico,txt}'],
           cleanupOutdatedCaches: true,
           navigateFallback: '/index.html',
+          navigateFallbackDenylist: [/^\/api/],
+          runtimeCaching: [
+            {
+              urlPattern: /^\/api\//,
+              handler: 'NetworkOnly',
+            },
+          ],
         },
         manifest: {
           id: '/',

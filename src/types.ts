@@ -29,11 +29,14 @@ export interface CustomerNotification {
 export interface Customer {
   customerId: string;
   fullName: string;
+  firstName?: string;
+  lastName?: string;
   mobileNumber: string;
   email?: string;
   dob?: string;
   dateOfBirth?: string;
   panNumber?: string;
+  panOrVoterId?: string;
   panMasked?: string;
   pincode?: string;
   passwordHash?: string;
@@ -171,11 +174,14 @@ export interface LoanApplication {
   leadId?: string; // Synonym for applicationId
   customerId?: string;
   fullName: string;
+  firstName?: string;
+  lastName?: string;
   mobileNumber: string;
   email?: string;
   dob?: string;
   dateOfBirth?: string;
   panNumber?: string;
+  panOrVoterId?: string;
   panMasked?: string;
   pincode?: string;
   loanCategory: LoanCategory | string;

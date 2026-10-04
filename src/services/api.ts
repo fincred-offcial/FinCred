@@ -83,6 +83,38 @@ export async function checkMobileRegistration(mobileNumber: string): Promise<{
   return data;
 }
 
+export async function customerContinue(mobileNumber: string): Promise<{
+  success: boolean;
+  data: {
+    mobile: string;
+    isRegistered?: boolean;
+    customerName?: string | null;
+    customerId?: string;
+    testOtp?: string;
+    message?: string;
+    expiresInSeconds?: number;
+  };
+  mobile: string;
+  isRegistered?: boolean;
+  customerName?: string | null;
+  customerId?: string;
+  testOtp?: string;
+  message?: string;
+}> {
+  const clean = mobileNumber.trim().replace(/\D/g, '').slice(-10);
+  const res = await fetch('/api/customer/continue', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mobile: clean, mobileNumber: clean })
+  });
+  const data = await res.json();
+  if (!res.ok || data.success === false) {
+    const errorMsg = data.error?.message || data.error || 'Unable to continue';
+    throw new Error(errorMsg);
+  }
+  return data;
+}
+
 export async function sendOtp(mobileNumber: string): Promise<{
   success: boolean;
   message: string;
@@ -91,14 +123,43 @@ export async function sendOtp(mobileNumber: string): Promise<{
   isRegistered?: boolean;
   customerName?: string | null;
 }> {
-  const res = await fetch('/api/auth/send-otp', {
+  const clean = mobileNumber.trim().replace(/\D/g, '').slice(-10);
+  const res = await fetch('/api/customer/continue', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mobileNumber })
+    body: JSON.stringify({ mobile: clean, mobileNumber: clean })
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to send OTP');
-  return data;
+  if (!res.ok || data.success === false) {
+    const msg = data.error?.message || data.error || 'Failed to send OTP';
+    throw new Error(msg);
+  }
+  const payload = data.data || data;
+  return {
+    success: true,
+    message: payload.message || data.message || `Verification code sent to +91 ${clean}`,
+    testOtp: payload.testOtp || data.testOtp || '123456',
+    expiresInSeconds: payload.expiresInSeconds || data.expiresInSeconds || 300,
+    isRegistered: payload.isRegistered !== undefined ? payload.isRegistered : data.isRegistered,
+    customerName: payload.customerName !== undefined ? payload.customerName : data.customerName
+  };
+}
+
+export async function fetchCustomerProfile(customerIdOrMobile?: string, token?: string): Promise<Customer> {
+  let url = '/api/customer/profile';
+  if (customerIdOrMobile) {
+    url += customerIdOrMobile.length === 10 && /^[6-9]\d{9}$/.test(customerIdOrMobile)
+      ? `?mobile=${customerIdOrMobile}`
+      : `?customerId=${customerIdOrMobile}`;
+  }
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(url, { headers });
+  const data = await res.json();
+  if (!res.ok || data.success === false) {
+    throw new Error(data.error?.message || data.error || 'Failed to fetch customer profile');
+  }
+  return data.data || data.customer || data;
 }
 
 export async function verifyOtp(mobileNumber: string, otp: string, fullName?: string): Promise<{ success: boolean; customer: Customer; token: string }> {
@@ -303,8 +364,32 @@ export async function adminLogin(username: string, password: string): Promise<{ 
     body: JSON.stringify({ username, password })
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Invalid admin credentials');
-  return data;
+  if (!res.ok || data.success === false) {
+    const errorMsg = data.error?.message || data.error || 'Invalid administrator credentials';
+    throw new Error(errorMsg);
+  }
+  return {
+    token: data.token || data.data?.token,
+    username: data.username || data.data?.username
+  };
+}
+
+export async function fetchAdminSession(token: string): Promise<{ authenticated: boolean; username: string }> {
+  const res = await fetch('/api/admin/session', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const data = await res.json();
+  if (!res.ok || data.success === false) throw new Error('Invalid or expired admin session');
+  return data.data || data;
+}
+
+export async function fetchAdminData(token: string): Promise<any> {
+  const res = await fetch('/api/admin/data', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const data = await res.json();
+  if (!res.ok || data.success === false) throw new Error('Failed to load admin data');
+  return data.data || data;
 }
 
 export async function fetchAdminStats(token: string): Promise<AdminStats> {

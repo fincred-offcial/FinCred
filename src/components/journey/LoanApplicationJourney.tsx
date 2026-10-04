@@ -97,10 +97,13 @@ export const LoanApplicationJourney: React.FC = () => {
   const [selectedPartner, setSelectedPartner] = useState<PartnerOption | null>(null);
 
   // Step 4: FinCred Application Form Fields (No Document Uploads)
+  const [firstName, setFirstName] = useState(customer?.firstName || '');
+  const [lastName, setLastName] = useState(customer?.lastName || '');
   const [fullName, setFullName] = useState(customer?.fullName || '');
   const [email, setEmail] = useState(customer?.email || '');
   const [dob, setDob] = useState(customer?.dob || customer?.dateOfBirth || '');
   const [panNumber, setPanNumber] = useState(customer?.panNumber || '');
+  const [panOrVoterId, setPanOrVoterId] = useState(customer?.panOrVoterId || customer?.panNumber || '');
   const [pincode, setPincode] = useState(customer?.pincode || '');
   const [amountRequested, setAmountRequested] = useState<string>(customer?.requiredLoanAmount ? String(customer.requiredLoanAmount) : '');
 
@@ -133,11 +136,19 @@ export const LoanApplicationJourney: React.FC = () => {
   useEffect(() => {
     if (isCustomerLoggedIn && customer) {
       setMobileNumber(customer.mobileNumber);
+      if (customer.firstName) setFirstName(customer.firstName);
+      if (customer.lastName) setLastName(customer.lastName);
       if (customer.fullName && customer.fullName !== 'Valued Customer') {
         setFullName(customer.fullName);
+        const parts = customer.fullName.trim().split(' ');
+        if (!customer.firstName) setFirstName(parts[0] || '');
+        if (!customer.lastName) setLastName(parts.slice(1).join(' ') || '');
       }
       if (customer.email) setEmail(customer.email);
-      if (customer.panNumber) setPanNumber(customer.panNumber);
+      if (customer.panOrVoterId || customer.panNumber) {
+        setPanOrVoterId(customer.panOrVoterId || customer.panNumber || '');
+        setPanNumber(customer.panNumber || customer.panOrVoterId || '');
+      }
       if (customer.dob) setDob(customer.dob);
       if (customer.pincode) setPincode(customer.pincode);
       if (customer.monthlyIncome) setMonthlyIncome(String(customer.monthlyIncome));
@@ -472,8 +483,23 @@ export const LoanApplicationJourney: React.FC = () => {
     e.preventDefault();
     setErrorMessage('');
 
-    if (!fullName.trim()) {
-      setErrorMessage('Please enter your full legal name as per PAN card.');
+    if (!firstName.trim()) {
+      setErrorMessage('Please enter your first name.');
+      return;
+    }
+
+    if (!lastName.trim()) {
+      setErrorMessage('Please enter your last name.');
+      return;
+    }
+
+    if (!dob.trim()) {
+      setErrorMessage('Please enter your date of birth (DOB).');
+      return;
+    }
+
+    if (!monthlyIncome || Number(monthlyIncome) <= 0) {
+      setErrorMessage('Please enter your approximate monthly income.');
       return;
     }
 
@@ -482,13 +508,9 @@ export const LoanApplicationJourney: React.FC = () => {
       return;
     }
 
-    if (!dob.trim()) {
-      setErrorMessage('Please enter your date of birth.');
-      return;
-    }
-
-    if (!panNumber.trim() || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panNumber.trim().toUpperCase())) {
-      setErrorMessage('Please enter a valid 10-character PAN number (e.g. ABCDE1234F).');
+    const cleanId = (panOrVoterId || panNumber).trim().toUpperCase();
+    if (!cleanId || cleanId.length < 8) {
+      setErrorMessage('Please enter a valid PAN Card Number (e.g. ABCDE1234F) or Voter ID Number.');
       return;
     }
 
@@ -517,14 +539,19 @@ export const LoanApplicationJourney: React.FC = () => {
     const partnerUrl = getPartnerUrl(selectedPartner.urlKey);
 
     try {
+      const combinedFullName = `${firstName.trim()} ${lastName.trim()}`.trim() || fullName.trim();
+
       // 1. Save all details to backend database FIRST
       const res = await submitLoanApplication({
-        fullName: fullName.trim(),
-        applicantName: fullName.trim(),
+        fullName: combinedFullName,
+        applicantName: combinedFullName,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         mobileNumber: mobileNumber.trim(),
         email: email.trim().toLowerCase(),
         dob: dob.trim(),
-        panNumber: panNumber.trim().toUpperCase(),
+        panNumber: cleanId,
+        panOrVoterId: cleanId,
         pincode: pincode.trim(),
         loanCategory: selectedLoanType,
         partnerName: selectedPartner.name,
@@ -532,11 +559,11 @@ export const LoanApplicationJourney: React.FC = () => {
         destinationUrl: partnerUrl,
         amountRequested: Number(amountRequested),
         customerId: customer?.customerId,
+        monthlyIncome: Number(monthlyIncome || 0),
 
         // Personal loan fields
         ...(selectedLoanType === 'Personal Loan' && {
           employmentType,
-          monthlyIncome: Number(monthlyIncome || 0),
           existingLoan
         }),
 
@@ -1333,32 +1360,70 @@ export const LoanApplicationJourney: React.FC = () => {
           {/* The FinCred Loan Application Form (No Document Uploads) */}
           <form onSubmit={handleSubmitApplication} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {/* Full Name */}
-              <div className="space-y-1 sm:col-span-2">
+              {/* First Name */}
+              <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-800">
-                  Full Legal Name (as on PAN) <span className="text-red-500">*</span>
+                  First Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
-                  value={fullName}
-                  onChange={e => setFullName(e.target.value)}
-                  placeholder="e.g. Rahul Sharma"
+                  value={firstName}
+                  onChange={e => {
+                    setFirstName(e.target.value);
+                    setFullName(`${e.target.value} ${lastName}`.trim());
+                  }}
+                  placeholder="e.g. Rahul"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
                 />
               </div>
 
-              {/* Mobile Number (Pre-filled and Verified) */}
+              {/* Last Name */}
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-800">
-                  Mobile Number (Verified)
+                  Last Name <span className="text-red-500">*</span>
                 </label>
-                <div className="px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-mono font-bold text-slate-700 flex items-center justify-between">
-                  <span>+91 {mobileNumber}</span>
-                  <span className="text-[10px] text-emerald-600 flex items-center gap-1 font-bold">
-                    <Check className="w-3 h-3" /> Verified
-                  </span>
-                </div>
+                <input
+                  type="text"
+                  required
+                  value={lastName}
+                  onChange={e => {
+                    setLastName(e.target.value);
+                    setFullName(`${firstName} ${e.target.value}`.trim());
+                  }}
+                  placeholder="e.g. Sharma"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
+                />
+              </div>
+
+              {/* Date of Birth */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-800">
+                  Date of Birth (DOB) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={dob}
+                  onChange={e => setDob(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs font-medium text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
+                />
+              </div>
+
+              {/* Monthly Income */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-800">
+                  Monthly Net Income (₹) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  required
+                  min={1000}
+                  value={monthlyIncome}
+                  onChange={e => setMonthlyIncome(e.target.value)}
+                  placeholder="e.g. 35000"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-bold text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
+                />
               </div>
 
               {/* Email Address */}
@@ -1376,34 +1441,36 @@ export const LoanApplicationJourney: React.FC = () => {
                 />
               </div>
 
-              {/* Date of Birth */}
+              {/* PAN Card or Voter ID Number */}
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-800">
-                  Date of Birth <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={dob}
-                  onChange={e => setDob(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs font-medium text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
-                />
-              </div>
-
-              {/* PAN Number */}
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-800">
-                  PAN Card Number <span className="text-red-500">*</span>
+                  PAN Card / Voter ID Number <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
-                  maxLength={10}
-                  value={panNumber}
-                  onChange={e => setPanNumber(e.target.value.toUpperCase())}
-                  placeholder="ABCDE1234F"
+                  value={panOrVoterId || panNumber}
+                  onChange={e => {
+                    const val = e.target.value.toUpperCase();
+                    setPanOrVoterId(val);
+                    setPanNumber(val);
+                  }}
+                  placeholder="e.g. ABCDE1234F or Voter ID"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-bold uppercase text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
                 />
+              </div>
+
+              {/* Mobile Number (Pre-filled and Verified) */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-800">
+                  Mobile Number (Verified)
+                </label>
+                <div className="px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-mono font-bold text-slate-700 flex items-center justify-between">
+                  <span>+91 {mobileNumber}</span>
+                  <span className="text-[10px] text-emerald-600 flex items-center gap-1 font-bold">
+                    <Check className="w-3 h-3" /> Verified
+                  </span>
+                </div>
               </div>
 
               {/* Required Loan Amount */}
@@ -1433,7 +1500,7 @@ export const LoanApplicationJourney: React.FC = () => {
                   value={pincode}
                   onChange={e => setPincode(e.target.value.replace(/\D/g, ''))}
                   placeholder="e.g. 110001"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-medium text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-bold text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
                 />
               </div>
 

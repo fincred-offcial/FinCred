@@ -60,12 +60,15 @@ export const LoanApplicationModal: React.FC = () => {
   const [platforms, setPlatforms] = useState<PartnerPlatform[]>([]);
   const [loadingPlatforms, setLoadingPlatforms] = useState(false);
 
-  // Common Contact & Identity Fields (All start empty)
+  // Common Contact & Identity Fields
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [fullName, setFullName] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
   const [email, setEmail] = useState('');
   const [dob, setDob] = useState('');
   const [panNumber, setPanNumber] = useState('');
+  const [panOrVoterId, setPanOrVoterId] = useState('');
   const [pincode, setPincode] = useState('');
   const [amountRequested, setAmountRequested] = useState<number | ''>('');
 
@@ -114,16 +117,35 @@ export const LoanApplicationModal: React.FC = () => {
       setSelectedLoanType('Personal Loan');
     }
 
-    // Reset customer form to completely blank
-    setFullName('');
-    setMobileNumber('');
-    setEmail('');
-    setDob('');
-    setPanNumber('');
-    setPincode('');
-    setAmountRequested('');
-    setEmploymentType('');
-    setMonthlyIncome('');
+    // Reset customer form or prefill if logged in
+    if (customer) {
+      const parts = (customer.fullName || '').trim().split(' ');
+      setFirstName(customer.firstName || parts[0] || '');
+      setLastName(customer.lastName || parts.slice(1).join(' ') || '');
+      setFullName(customer.fullName || '');
+      setMobileNumber(customer.mobileNumber || '');
+      setEmail(customer.email || '');
+      setDob(customer.dob || customer.dateOfBirth || '');
+      setPanOrVoterId(customer.panOrVoterId || customer.panNumber || '');
+      setPanNumber(customer.panNumber || customer.panOrVoterId || '');
+      setPincode(customer.pincode || '');
+      setAmountRequested(customer.requiredLoanAmount || customer.amountRequested || '');
+      setEmploymentType(customer.employmentType || '');
+      setMonthlyIncome(customer.monthlyIncome ? customer.monthlyIncome : '');
+    } else {
+      setFirstName('');
+      setLastName('');
+      setFullName('');
+      setMobileNumber('');
+      setEmail('');
+      setDob('');
+      setPanNumber('');
+      setPanOrVoterId('');
+      setPincode('');
+      setAmountRequested('');
+      setEmploymentType('');
+      setMonthlyIncome('');
+    }
     setExistingLoan('None');
     setBusinessType('');
     setBusinessVintage('');
@@ -215,8 +237,23 @@ export const LoanApplicationModal: React.FC = () => {
   const handleProceedToStep2 = () => {
     setErrorMsg('');
 
-    if (!fullName.trim() || fullName.trim().length < 3) {
-      setErrorMsg(isBusinessLoan ? 'Please enter the applicant full name.' : 'Please enter your full legal name as per PAN.');
+    if (!firstName.trim()) {
+      setErrorMsg('Please enter your First Name.');
+      return;
+    }
+
+    if (!lastName.trim()) {
+      setErrorMsg('Please enter your Last Name.');
+      return;
+    }
+
+    if (!dob) {
+      setErrorMsg('Please enter your Date of Birth (DOB).');
+      return;
+    }
+
+    if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setErrorMsg('Please enter a valid email address.');
       return;
     }
 
@@ -226,17 +263,13 @@ export const LoanApplicationModal: React.FC = () => {
       return;
     }
 
-    if (!dob) {
-      setErrorMsg('Please enter your Date of Birth.');
-      return;
-    }
-
     const cleanPin = pincode.trim();
     if (!cleanPin || !/^[1-9][0-9]{5}$/.test(cleanPin)) {
       setErrorMsg('Please enter a valid 6-digit residential pincode.');
       return;
     }
 
+    setFullName(`${firstName.trim()} ${lastName.trim()}`);
     setFormPage(2);
   };
 
@@ -245,10 +278,15 @@ export const LoanApplicationModal: React.FC = () => {
     e.preventDefault();
     setErrorMsg('');
 
-    // Common validations
-    const cleanPan = panNumber.trim().toUpperCase();
-    if (!cleanPan || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(cleanPan)) {
-      setErrorMsg('Please enter a valid 10-character PAN number (e.g. ABCDE1234F).');
+    // PAN Card or Voter ID validation
+    const cleanId = (panOrVoterId || panNumber).trim().toUpperCase();
+    if (!cleanId || cleanId.length < 8) {
+      setErrorMsg('Please enter a valid PAN Card Number (e.g. ABCDE1234F) or Voter ID Number.');
+      return;
+    }
+
+    if (!monthlyIncome || Number(monthlyIncome) <= 0) {
+      setErrorMsg('Please provide your approximate monthly net income.');
       return;
     }
 
@@ -275,10 +313,6 @@ export const LoanApplicationModal: React.FC = () => {
         setErrorMsg('Please select your Employment Type.');
         return;
       }
-      if (!monthlyIncome || Number(monthlyIncome) < 1000) {
-        setErrorMsg('Please provide your approximate monthly net income.');
-        return;
-      }
     }
 
     if (!hasConsented) {
@@ -291,20 +325,24 @@ export const LoanApplicationModal: React.FC = () => {
     try {
       const cleanMobile = mobileNumber.replace(/\D/g, '');
       const cleanPin = pincode.trim();
+      const combinedFullName = `${firstName.trim()} ${lastName.trim()}`.trim() || fullName.trim();
 
       // Submit and save application to Firestore immediately
       const res = await submitLoanApplication({
-        fullName: fullName.trim(),
-        applicantName: fullName.trim(),
+        fullName: combinedFullName,
+        applicantName: combinedFullName,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         mobileNumber: cleanMobile,
         email: email.trim().toLowerCase() || undefined,
         dob,
-        panNumber: cleanPan,
+        panNumber: cleanId,
+        panOrVoterId: cleanId,
         pincode: cleanPin,
         loanCategory: selectedLoanType,
         amountRequested: Number(amountRequested),
         employmentType: isBusinessLoan ? businessType : employmentType,
-        monthlyIncome: isBusinessLoan ? undefined : Number(monthlyIncome),
+        monthlyIncome: Number(monthlyIncome),
         existingLoan: isBusinessLoan ? existingBusinessLoan : existingLoan,
         businessType: isBusinessLoan ? businessType : undefined,
         businessVintage: isBusinessLoan ? businessVintage : undefined,
@@ -526,17 +564,67 @@ export const LoanApplicationModal: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      {/* Full Name / Applicant Name */}
+                      {/* First Name */}
                       <div>
                         <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          {isBusinessLoan ? 'Applicant Name (as on PAN)' : 'Full Name (as on PAN)'} <span className="text-rose-500">*</span>
+                          First Name <span className="text-rose-500">*</span>
                         </label>
                         <input
                           type="text"
                           required
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          placeholder="Enter full legal name"
+                          value={firstName}
+                          onChange={(e) => {
+                            setFirstName(e.target.value);
+                            setFullName(`${e.target.value} ${lastName}`.trim());
+                          }}
+                          placeholder="e.g. Rahul"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                        />
+                      </div>
+
+                      {/* Last Name */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Last Name <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={lastName}
+                          onChange={(e) => {
+                            setLastName(e.target.value);
+                            setFullName(`${firstName} ${e.target.value}`.trim());
+                          }}
+                          placeholder="e.g. Sharma"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                        />
+                      </div>
+
+                      {/* Date of Birth (DOB) */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Date of Birth (DOB) <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          required
+                          value={dob}
+                          onChange={(e) => setDob(e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-800"
+                        />
+                      </div>
+
+                      {/* Email Address */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Email Address <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="email"
+                          required
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="name@example.com"
                           className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                         />
                       </div>
@@ -560,36 +648,8 @@ export const LoanApplicationModal: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Email */}
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Email Address
-                        </label>
-                        <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="name@example.com"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                        />
-                      </div>
-
-                      {/* Date of Birth */}
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Date of Birth <span className="text-rose-500">*</span>
-                        </label>
-                        <input
-                          type="date"
-                          required
-                          value={dob}
-                          onChange={(e) => setDob(e.target.value)}
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-800"
-                        />
-                      </div>
-
                       {/* Current Residential Pincode */}
-                      <div className="sm:col-span-2">
+                      <div>
                         <label className="block text-xs font-semibold text-slate-700 mb-1">
                           Current Pincode <span className="text-rose-500">*</span>
                         </label>
@@ -630,20 +690,26 @@ export const LoanApplicationModal: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      {/* PAN Card */}
+                      {/* PAN Card or Voter ID */}
                       <div>
                         <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          PAN Card Number <span className="text-rose-500">*</span>
+                          PAN Card / Voter ID Number <span className="text-rose-500">*</span>
                         </label>
                         <input
                           type="text"
                           required
-                          maxLength={10}
-                          value={panNumber}
-                          onChange={(e) => setPanNumber(e.target.value.toUpperCase())}
-                          placeholder="ABCDE1234F"
+                          value={panOrVoterId || panNumber}
+                          onChange={(e) => {
+                            const val = e.target.value.toUpperCase();
+                            setPanOrVoterId(val);
+                            setPanNumber(val);
+                          }}
+                          placeholder="e.g. ABCDE1234F or Voter ID"
                           className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm uppercase tracking-wider font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                         />
+                        <span className="text-[10px] text-slate-400 mt-0.5 block">
+                          Enter valid 10-digit PAN or Voter ID card number
+                        </span>
                       </div>
 
                       {/* Required Loan Amount */}

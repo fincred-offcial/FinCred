@@ -127,22 +127,23 @@ The server serves both the production static frontend and all `/api/*` endpoints
 3. Add environment variables in the host's dashboard (from `.env.example`).
 4. Set `PORT` to the host's port or let the platform inject it automatically.
 
-### Option B: Vercel (Split Deployment or Serverless)
+### Option B: Vercel (Full Serverless Deployment or Split)
 
-If deploying the frontend to Vercel:
-1. The provided `vercel.json` already contains SPA rewrites:
-   - Non-API routes are rewritten to `/index.html`.
-   - `/api/*` routes are protected from being routed to HTML.
-2. If hosting the backend separately, set `VITE_API_BASE_URL=https://your-backend-api.com` in Vercel's Environment Variables.
+FinCred includes an `api/index.ts` entrypoint configured in `vercel.json` for effortless full-stack serverless deployment on Vercel:
+1. Connect your repository to **Vercel**.
+2. Framework preset: **Vite**.
+3. All `/api/*` endpoints are automatically routed to `api/index.ts` as serverless functions.
+4. Non-API routes are seamlessly rewritten to `/index.html` (SPA fallback).
+5. Add your environment variables (from `.env.example`) in Vercel's **Settings > Environment Variables**.
 
 ### Option C: Netlify / Cloudflare Pages
 
-1. The provided `public/_redirects` ensures proper SPA routing:
+1. The provided `public/_redirects` and `netlify.toml` ensure proper SPA routing:
    ```
-   /api/*  /api/:splat  200
    /*      /index.html  200
    ```
 2. Set build command to `npm run build` and publish directory to `dist`.
+3. If deploying frontend-only on Netlify and backend on Render/Railway, set `VITE_API_BASE_URL=https://your-backend-api.com`.
 
 ---
 
@@ -150,7 +151,7 @@ If deploying the frontend to Vercel:
 
 To prevent frontend parsing crashes (`Unexpected token '<', "<!doctype..."`):
 - All `/api/*` routes explicitly return `Content-Type: application/json`.
-- A dedicated 404 handler for `/api/*` catches missing routes and returns a JSON 404 response instead of an HTML page.
+- A dedicated 404 handler for `/api/*` catches missing routes and returns a JSON 404 response (`{ "success": false, "error": { "code": "NOT_FOUND", ... } }`) instead of an HTML page.
 - A global error middleware catches unhandled exceptions and outputs JSON 500 responses.
 - The central frontend client (`src/services/apiClient.ts`) verifies the `Content-Type` before calling `.json()`, catching unexpected proxy HTML errors and translating them into readable `ApiError` objects.
 
@@ -159,16 +160,24 @@ To prevent frontend parsing crashes (`Unexpected token '<', "<!doctype..."`):
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/health` | Service health status check | Public |
+| `POST`| `/api/customer/continue` | Validated customer mobile continue & instant OTP | Public |
+| `GET` | `/api/customer/profile` | Customer profile retrieval | Customer / Token |
+| `PUT` | `/api/customer/profile` | Update customer profile details | Customer / Token |
+| `POST`| `/api/auth/login` | Unified authentication (Admin or Customer OTP) | Public |
+| `POST`| `/api/auth/logout` | Invalidate current session | Authenticated |
+| `GET` | `/api/auth/session` | Validate active session & return role | Authenticated |
 | `GET` | `/api/settings` | Public partner lending URLs | Public |
 | `GET` | `/api/banners` | Active promotional banner list | Public |
-| `POST` | `/api/auth/send-otp` | Request 6-digit mobile OTP | Public |
-| `POST` | `/api/auth/verify-otp` | Verify OTP and issue JWT session | Public |
-| `POST` | `/api/applications` | Submit new loan lead (Web & App) | Public |
+| `POST`| `/api/auth/send-otp` | Request 6-digit mobile OTP | Public |
+| `POST`| `/api/auth/verify-otp` | Verify OTP and issue JWT session | Public |
+| `POST`| `/api/applications` | Submit new loan lead (Web & App) | Public |
 | `GET` | `/api/applications/my` | Retrieve applicant loan history | Customer |
-| `POST` | `/api/cibil/submit` | Submit ₹299 CIBIL upgrade order | Public |
+| `POST`| `/api/cibil/submit` | Submit ₹299 CIBIL upgrade order | Public |
 | `GET` | `/api/earn/profile` | Customer referral stats & earnings | Customer |
-| `POST` | `/api/earn/activate-profile` | Register bank details for payouts | Customer |
-| `POST` | `/api/admin/login` | Administrator session login | Public |
+| `POST`| `/api/earn/activate-profile` | Register bank details for payouts | Customer |
+| `POST`| `/api/admin/login` | Administrator session login | Public |
+| `GET` | `/api/admin/session` | Admin token validation | Admin |
+| `GET` | `/api/admin/data` | Consolidated administrative overview data | Admin |
 | `GET` | `/api/admin/applications` | List all leads with origin tracking | Admin |
 | `PUT` | `/api/admin/applications/:id/status` | Update internal lead status | Admin |
 | `GET` | `/api/admin/earn/payouts` | Review pending referral payouts | Admin |

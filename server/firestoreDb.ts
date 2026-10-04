@@ -738,32 +738,68 @@ class FirestoreCentralDatabase {
   }
 
   // ==========================================
-  // OTP METHODS
+  // OTP METHODS (Persistent Firestore + Fast Memory Cache)
   // ==========================================
-  setOtp(mobile: string, otp: string, durationMs = 5 * 60 * 1000) {
-    this.otps[mobile] = {
+  async setOtp(mobile: string, otp: string, durationMs = 5 * 60 * 1000): Promise<void> {
+    const cleanMobile = String(mobile).trim();
+    const expiresAt = Date.now() + durationMs;
+    this.otps[cleanMobile] = {
       otp,
-      expiresAt: Date.now() + durationMs,
+      expiresAt,
       attempts: 0
     };
+    try {
+      await setDoc(doc(serverDb, 'otps', cleanMobile), {
+        otp,
+        expiresAt,
+        attempts: 0,
+        createdAt: new Date().toISOString()
+      });
+    } catch (e) {
+      // In-memory record acts as zero-latency fallback
+    }
   }
 
-  verifyOtp(mobile: string, userOtp: string): boolean {
-    const record = this.otps[mobile];
+  async verifyOtp(mobile: string, userOtp: string): Promise<boolean> {
+    const cleanMobile = String(mobile).trim();
+    const inputOtp = userOtp.trim();
+
+    // Check memory cache first
+    let record = this.otps[cleanMobile];
+
+    // If not in local instance memory (e.g. serverless cold start), read from Firestore
+    if (!record) {
+      try {
+        const snap = await getDoc(doc(serverDb, 'otps', cleanMobile));
+        if (snap.exists()) {
+          record = snap.data() as any;
+        }
+      } catch (e) {
+        // Fallback to memory
+      }
+    }
+
     if (!record) return false;
+
     if (Date.now() > record.expiresAt) {
-      delete this.otps[mobile];
+      delete this.otps[cleanMobile];
+      deleteDoc(doc(serverDb, 'otps', cleanMobile)).catch(() => {});
       return false;
     }
-    record.attempts += 1;
+
+    record.attempts = (record.attempts || 0) + 1;
     if (record.attempts > 5) {
-      delete this.otps[mobile];
+      delete this.otps[cleanMobile];
+      deleteDoc(doc(serverDb, 'otps', cleanMobile)).catch(() => {});
       return false;
     }
-    if (record.otp === userOtp.trim()) {
-      delete this.otps[mobile];
+
+    if (record.otp === inputOtp) {
+      delete this.otps[cleanMobile];
+      deleteDoc(doc(serverDb, 'otps', cleanMobile)).catch(() => {});
       return true;
     }
+
     return false;
   }
 

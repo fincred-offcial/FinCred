@@ -56,7 +56,7 @@ const INSTANT_PARTNERS: InstantLoanPartner[] = [
 ];
 
 export const InstantLoanModal: React.FC = () => {
-  const { isInstantLoanModalOpen, closeInstantLoanModal, customer } = useAuth();
+  const { isInstantLoanModalOpen, closeInstantLoanModal, openLoanModal, customer } = useAuth();
 
   if (!isInstantLoanModalOpen) return null;
 
@@ -64,7 +64,7 @@ export const InstantLoanModal: React.FC = () => {
     // Log customer redirection activity to backend admin database
     logUserActivity({
       activityType: 'partner_redirect',
-      description: `Customer clicked Instant Loan link: ${partner.name}`,
+      description: `Customer clicked Instant Loan partner: ${partner.name}`,
       customerId: customer?.customerId,
       userMobile: customer?.mobileNumber,
       userName: customer?.fullName,
@@ -75,8 +75,9 @@ export const InstantLoanModal: React.FC = () => {
       }
     });
 
-    // Open verified direct instant loan URL
-    window.open(partner.url, '_blank', 'noopener,noreferrer');
+    // Require completing the FinCred loan application form first
+    closeInstantLoanModal();
+    openLoanModal('Personal Loan / Instant Personal Loan', partner.id);
   };
 
   return (
