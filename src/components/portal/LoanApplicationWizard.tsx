@@ -48,6 +48,9 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
   const [successNotice, setSuccessNotice] = useState('');
 
   // Step 1: Personal Details
+  const initialParts = (customer.fullName || '').trim().split(' ');
+  const [firstName, setFirstName] = useState(customer.firstName || initialParts[0] || '');
+  const [lastName, setLastName] = useState(customer.lastName || initialParts.slice(1).join(' ') || '');
   const [fullName, setFullName] = useState(customer.fullName || '');
   const [mobileNumber] = useState(customer.mobileNumber || '');
   const [email, setEmail] = useState(customer.email || '');
@@ -226,17 +229,29 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
     setErrorMessage('');
 
     if (currentStep === 1) {
-      if (!fullName.trim() || fullName.trim().length < 3) {
-        setErrorMessage('Please enter your full legal name as per PAN.');
+      if (!firstName.trim()) {
+        setErrorMessage('Please enter your First Name.');
+        return;
+      }
+      if (!lastName.trim()) {
+        setErrorMessage('Please enter your Last Name.');
         return;
       }
       if (!dob) {
         setErrorMessage('Please enter your Date of Birth.');
         return;
       }
+      if (!monthlyIncome || Number(monthlyIncome) <= 0) {
+        setErrorMessage('Please enter your Monthly Net Income.');
+        return;
+      }
+      if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email.trim())) {
+        setErrorMessage('Please enter a valid email address.');
+        return;
+      }
       const cleanPan = panNumber.trim().toUpperCase();
-      if (!cleanPan || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(cleanPan)) {
-        setErrorMessage('Please enter a valid 10-character PAN (e.g. ABCDE1234F).');
+      if (!cleanPan || cleanPan.length < 8) {
+        setErrorMessage('Please enter a valid PAN Card (e.g. ABCDE1234F) or Voter ID Number.');
         return;
       }
       if (!pincode || !/^\d{6}$/.test(pincode.trim())) {
@@ -423,13 +438,75 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Full Name (as per PAN) *</label>
+              <label className="text-xs font-bold text-slate-700">First Name *</label>
               <input
                 type="text"
-                value={fullName}
-                onChange={e => setFullName(e.target.value)}
-                placeholder="Ramesh Kumar Verma"
+                value={firstName}
+                onChange={e => {
+                  setFirstName(e.target.value);
+                  setFullName(`${e.target.value} ${lastName}`.trim());
+                }}
+                placeholder="e.g. Rahul"
                 className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">Last Name *</label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={e => {
+                  setLastName(e.target.value);
+                  setFullName(`${firstName} ${e.target.value}`.trim());
+                }}
+                placeholder="e.g. Sharma"
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">Date of Birth (DOB) *</label>
+              <input
+                type="date"
+                value={dob}
+                onChange={e => setDob(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">Monthly Net Income (₹) *</label>
+              <input
+                type="number"
+                min={1000}
+                value={monthlyIncome}
+                onChange={e => setMonthlyIncome(e.target.value ? Number(e.target.value) : '')}
+                placeholder="e.g. 45000"
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-300 font-mono font-bold text-sm text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">Email Address *</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="name@example.com"
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">PAN Card / Voter ID Number *</label>
+              <input
+                type="text"
+                maxLength={16}
+                value={panNumber}
+                onChange={e => setPanNumber(e.target.value.toUpperCase())}
+                placeholder="e.g. ABCDE1234F or Voter ID"
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-300 font-mono font-bold uppercase text-sm text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
               />
             </div>
 
@@ -440,39 +517,6 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                 disabled
                 value={`+91 ${mobileNumber}`}
                 className="w-full px-4 py-3 rounded-2xl bg-slate-100 border border-slate-200 font-mono font-bold text-sm text-slate-600 cursor-not-allowed"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Email Address *</label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="ramesh@example.com"
-                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Date of Birth *</label>
-              <input
-                type="date"
-                value={dob}
-                onChange={e => setDob(e.target.value)}
-                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">PAN Card Number *</label>
-              <input
-                type="text"
-                maxLength={10}
-                value={panNumber}
-                onChange={e => setPanNumber(e.target.value.toUpperCase())}
-                placeholder="ABCDE1234F"
-                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-300 font-mono font-bold uppercase text-sm text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
               />
             </div>
 

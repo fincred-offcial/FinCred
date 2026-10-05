@@ -148,7 +148,7 @@ export function createRateLimiter(options: {
     code = 'RATE_LIMIT_EXCEEDED',
     keyGenerator = (req: Request) => {
       const forwarded = req.headers['x-forwarded-for'];
-      const ip = (typeof forwarded === 'string' ? forwarded.split(',')[0] : req.socket.remoteAddress) || '127.0.0.1';
+      const ip = (typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : (req.socket?.remoteAddress || (req.connection as any)?.remoteAddress)) || '127.0.0.1';
       return `${req.path}:${ip}`;
     }
   } = options;

@@ -189,12 +189,15 @@ export async function updateCustomerProfile(
 }
 
 export async function submitLoanApplication(params: {
+  firstName?: string;
+  lastName?: string;
   fullName?: string;
   applicantName?: string;
   mobileNumber: string;
   email?: string;
   dob?: string;
   panNumber?: string;
+  panOrVoterId?: string;
   pincode?: string;
   loanCategory: LoanCategory | string;
   amountRequested?: number;

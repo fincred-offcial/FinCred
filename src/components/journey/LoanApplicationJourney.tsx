@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ShieldCheck,
   ArrowRight,
@@ -64,6 +64,8 @@ interface PartnerOption {
 
 export const LoanApplicationJourney: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isDedicatedAuthRoute = location.pathname.toLowerCase().includes('sign') || location.pathname.toLowerCase().includes('login');
   const { settings, customer, setCustomerSession, isCustomerLoggedIn } = useAuth();
 
   // If customer is already logged in, never show the mobile number entry screen on refresh/visit.
@@ -648,128 +650,148 @@ export const LoanApplicationJourney: React.FC = () => {
         <div className="relative w-full min-h-[92vh] overflow-hidden bg-gradient-to-b from-blue-100/70 via-sky-50/50 to-white pb-14 sm:pb-20">
           
           {/* ============================================================ */}
-          {/* HIGH-IMPACT FULL-WIDTH TOP PROMOTIONAL BANNER                */}
+          {/* HIGH-IMPACT FULL-WIDTH TOP PROMOTIONAL BANNER OR DIRECT AUTH */}
           {/* ============================================================ */}
-          <div className="w-full relative overflow-hidden bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 border-b border-blue-800/40 shadow-xl">
-            {/* Background 3D Graphic */}
-            <div className="absolute inset-0 opacity-40 mix-blend-screen pointer-events-none">
-              <img
-                src="/banner-3d-top.jpg"
-                alt="FinCred 3D Banner Graphic"
-                className="w-full h-full object-cover object-center"
-              />
+          {isDedicatedAuthRoute ? (
+            <div className="max-w-xl mx-auto px-4 pt-8 pb-3 text-center space-y-2 relative z-10">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-600/10 border border-blue-500/30 text-blue-700 text-xs font-black uppercase tracking-wider backdrop-blur-md shadow-2xs">
+                <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                <span>Customer Sign Up & Registration</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 font-['Outfit',sans-serif]">
+                Sign Up with FinCred
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
+                Enter your 10-digit mobile number to verify with OTP and create your account.
+              </p>
             </div>
+          ) : (
+            <div className="w-full relative overflow-hidden bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 border-b border-blue-800/40 shadow-xl">
+              {/* Background 3D Graphic */}
+              <div className="absolute inset-0 opacity-40 mix-blend-screen pointer-events-none">
+                <img
+                  src="/banner-3d-top.jpg"
+                  alt="FinCred 3D Banner Graphic"
+                  className="w-full h-full object-cover object-center"
+                />
+              </div>
 
-            {/* Glowing Accent Flares */}
-            <div className="absolute -top-24 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 right-1/4 w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none" />
+              {/* Glowing Accent Flares */}
+              <div className="absolute -top-24 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-24 right-1/4 w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7 relative z-10">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                
-                {/* Half 1: High-Impact Catchy Hinglish / English Copy */}
-                <div className="lg:col-span-7 space-y-2.5 text-left">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/40 text-cyan-300 text-xs font-black uppercase tracking-wider backdrop-blur-md shadow-xs">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                    <span>Digital Loan Fest • 2026 Special</span>
-                  </div>
-
-                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight font-['Outfit',sans-serif] leading-tight">
-                    Sapno Ko Do Nayi Udaan
-                    <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-200 to-blue-300">
-                      Instant Loan Assistance Up to ₹30 Lakhs*
-                    </span>
-                  </h2>
-
-                  <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
-                    Compare offers across 250+ RBI-registered NBFCs & Banks at competitive interest rates with zero branch visits and paperless processing.
-                  </p>
-
-                  {/* Feature Badges Row */}
-                  <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-semibold text-slate-200">
-                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-xs border border-white/15">
-                      <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                      5-Min Digital Sanction
-                    </span>
-                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-xs border border-white/15">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                      Zero Physical Docs
-                    </span>
-                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-xs border border-white/15">
-                      <Landmark className="w-3.5 h-3.5 text-cyan-400" />
-                      250+ Partner Network
-                    </span>
-                  </div>
-                </div>
-
-                {/* Half 2: 3D Highlight Stats & Quick Action */}
-                <div className="lg:col-span-5 flex flex-col sm:flex-row lg:flex-col gap-3 justify-center">
-                  <div className="grid grid-cols-2 gap-3 w-full">
-                    {/* Stat 1 */}
-                    <div className="p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white text-left shadow-lg">
-                      <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-cyan-300 block">
-                        Interest Rates
-                      </span>
-                      <div className="text-xl sm:text-2xl font-black font-mono text-white mt-0.5">
-                        10.49% <span className="text-xs font-normal text-slate-300">p.a.*</span>
-                      </div>
-                      <span className="text-[10px] text-slate-300 font-medium">Starting range</span>
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7 relative z-10">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                  
+                  {/* Half 1: High-Impact Catchy Hinglish / English Copy */}
+                  <div className="lg:col-span-7 space-y-2.5 text-left">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/40 text-cyan-300 text-xs font-black uppercase tracking-wider backdrop-blur-md shadow-xs">
+                      <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                      <span>Digital Loan Fest • 2026 Special</span>
                     </div>
 
-                    {/* Stat 2 */}
-                    <div className="p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white text-left shadow-lg">
-                      <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-amber-300 block">
-                        Loan Sanctions
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight font-['Outfit',sans-serif] leading-tight">
+                      Sapno Ko Do Nayi Udaan
+                      <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-200 to-blue-300">
+                        Instant Loan Assistance Up to ₹30 Lakhs*
                       </span>
-                      <div className="text-xl sm:text-2xl font-black font-mono text-white mt-0.5">
-                        ₹30 Lakhs
-                      </div>
-                      <span className="text-[10px] text-slate-300 font-medium">Max assistance</span>
+                    </h2>
+
+                    <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+                      Compare offers across 250+ RBI-registered NBFCs & Banks at competitive interest rates with zero branch visits and paperless processing.
+                    </p>
+
+                    {/* Feature Badges Row */}
+                    <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-semibold text-slate-200">
+                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-xs border border-white/15">
+                        <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                        5-Min Digital Sanction
+                      </span>
+                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-xs border border-white/15">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        Zero Physical Docs
+                      </span>
+                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-xs border border-white/15">
+                        <Landmark className="w-3.5 h-3.5 text-cyan-400" />
+                        250+ Partner Network
+                      </span>
                     </div>
                   </div>
 
-                  {/* Quick Scroll Action Button */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const input = document.getElementById('hero-mobile-input');
-                      if (input) {
-                        input.focus();
-                        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      }
-                    }}
-                    className="w-full py-3 px-5 rounded-2xl font-black text-xs sm:text-sm text-slate-900 bg-gradient-to-r from-cyan-400 via-sky-300 to-white hover:brightness-110 shadow-lg shadow-cyan-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <span>Check Your Loan Eligibility Now</span>
-                    <ArrowRight className="w-4 h-4 text-slate-900" />
-                  </button>
-                </div>
+                  {/* Half 2: 3D Highlight Stats & Quick Action */}
+                  <div className="lg:col-span-5 flex flex-col sm:flex-row lg:flex-col gap-3 justify-center">
+                    <div className="grid grid-cols-2 gap-3 w-full">
+                      {/* Stat 1 */}
+                      <div className="p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white text-left shadow-lg">
+                        <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-cyan-300 block">
+                          Interest Rates
+                        </span>
+                        <div className="text-xl sm:text-2xl font-black font-mono text-white mt-0.5">
+                          10.49% <span className="text-xs font-normal text-slate-300">p.a.*</span>
+                        </div>
+                        <span className="text-[10px] text-slate-300 font-medium">Starting range</span>
+                      </div>
 
+                      {/* Stat 2 */}
+                      <div className="p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white text-left shadow-lg">
+                        <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-amber-300 block">
+                          Loan Sanctions
+                        </span>
+                        <div className="text-xl sm:text-2xl font-black font-mono text-white mt-0.5">
+                          ₹30 Lakhs
+                        </div>
+                        <span className="text-[10px] text-slate-300 font-medium">Max assistance</span>
+                      </div>
+                    </div>
+
+                    {/* Quick Scroll Action Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const input = document.getElementById('hero-mobile-input');
+                        if (input) {
+                          input.focus();
+                          input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                      }}
+                      className="w-full py-3 px-5 rounded-2xl font-black text-xs sm:text-sm text-slate-900 bg-gradient-to-r from-cyan-400 via-sky-300 to-white hover:brightness-110 shadow-lg shadow-cyan-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span>Check Your Loan Eligibility Now</span>
+                      <ArrowRight className="w-4 h-4 text-slate-900" />
+                    </button>
+                  </div>
+
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* 3D Abstract Floating Shapes Background */}
-          {/* 3D Sphere 1 */}
-          <div className="absolute top-48 right-12 w-20 h-20 rounded-full bg-gradient-to-tr from-blue-400/40 via-sky-300/50 to-white/70 shadow-2xl shadow-blue-500/30 backdrop-blur-sm pointer-events-none transform rotate-12 animate-pulse" />
-          {/* 3D Sphere 2 */}
-          <div className="absolute top-96 left-8 w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-400/40 to-blue-600/30 shadow-xl shadow-cyan-500/20 backdrop-blur-sm pointer-events-none" />
-          {/* Soft-glow decorative blobs */}
-          <div className="absolute top-28 right-0 -mr-20 w-88 sm:w-[480px] h-88 sm:h-[480px] rounded-full bg-gradient-to-b from-blue-300/30 via-sky-200/40 to-transparent blur-3xl pointer-events-none" />
-          <div className="absolute top-1/2 left-0 -ml-24 w-80 sm:w-96 h-80 sm:h-96 rounded-full bg-gradient-to-tr from-sky-300/30 to-indigo-200/30 blur-3xl pointer-events-none" />
-          <div className="absolute bottom-10 right-1/4 w-88 h-88 rounded-full bg-indigo-100/40 blur-3xl pointer-events-none" />
+          {!isDedicatedAuthRoute && (
+            <>
+              {/* 3D Sphere 1 */}
+              <div className="absolute top-48 right-12 w-20 h-20 rounded-full bg-gradient-to-tr from-blue-400/40 via-sky-300/50 to-white/70 shadow-2xl shadow-blue-500/30 backdrop-blur-sm pointer-events-none transform rotate-12 animate-pulse" />
+              {/* 3D Sphere 2 */}
+              <div className="absolute top-96 left-8 w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-400/40 to-blue-600/30 shadow-xl shadow-cyan-500/20 backdrop-blur-sm pointer-events-none" />
+              {/* Soft-glow decorative blobs */}
+              <div className="absolute top-28 right-0 -mr-20 w-88 sm:w-[480px] h-88 sm:h-[480px] rounded-full bg-gradient-to-b from-blue-300/30 via-sky-200/40 to-transparent blur-3xl pointer-events-none" />
+              <div className="absolute top-1/2 left-0 -ml-24 w-80 sm:w-96 h-80 sm:h-96 rounded-full bg-gradient-to-tr from-sky-300/30 to-indigo-200/30 blur-3xl pointer-events-none" />
+              <div className="absolute bottom-10 right-1/4 w-88 h-88 rounded-full bg-indigo-100/40 blur-3xl pointer-events-none" />
 
-          {/* Floating 3D Gold Accent Coin Pill */}
-          <div className="hidden sm:flex absolute top-64 right-1/3 items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/30 pointer-events-none transform -rotate-6">
-            <span className="w-4 h-4 rounded-full bg-white flex items-center justify-center text-[10px] font-bold text-amber-600">₹</span>
-            <span>Fast Disbursement</span>
-          </div>
+              {/* Floating 3D Gold Accent Coin Pill */}
+              <div className="hidden sm:flex absolute top-64 right-1/3 items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/30 pointer-events-none transform -rotate-6">
+                <span className="w-4 h-4 rounded-full bg-white flex items-center justify-center text-[10px] font-bold text-amber-600">₹</span>
+                <span>Fast Disbursement</span>
+              </div>
+            </>
+          )}
 
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 relative z-10">
             {/* Centered Main Content */}
             <div className="max-w-xl mx-auto space-y-4">
               {/* 4 Mini Benefit Circular Icon Cards */}
-              <div className="p-3 rounded-2xl bg-blue-50/80 border border-blue-100/90 shadow-xs w-full">
+              {!isDedicatedAuthRoute && (
+                <div className="p-3 rounded-2xl bg-blue-50/80 border border-blue-100/90 shadow-xs w-full">
                   <div className="grid grid-cols-4 gap-2 text-center">
                     {/* Personal Loan */}
                     <div className="flex flex-col items-center group cursor-default">
@@ -808,6 +830,7 @@ export const LoanApplicationJourney: React.FC = () => {
                     </div>
                   </div>
                 </div>
+              )}
 
                 {/* The Prominent Mobile Number Card */}
                 <div id="otp-verification-card" className="bg-white rounded-3xl p-6 sm:p-7 shadow-2xl shadow-blue-900/10 border border-blue-100/90 max-w-lg space-y-4 scroll-mt-24">
@@ -1518,18 +1541,6 @@ export const LoanApplicationJourney: React.FC = () => {
                       <option value="Self Employed">Self-Employed Professional</option>
                       <option value="Business Owner">Small Business Owner</option>
                     </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-800">Monthly Net Income (₹)</label>
-                    <input
-                      type="number"
-                      required
-                      value={monthlyIncome}
-                      onChange={e => setMonthlyIncome(e.target.value)}
-                      placeholder="e.g. 35000"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-medium text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
-                    />
                   </div>
 
                   <div className="space-y-1">

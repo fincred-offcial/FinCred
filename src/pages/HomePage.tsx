@@ -18,7 +18,8 @@ import {
   Check,
   ExternalLink,
   Layers,
-  ChevronRight
+  ChevronRight,
+  UserPlus
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.js';
 import { EmiCalculatorSection } from '../components/EmiCalculatorSection.js';
@@ -143,7 +144,8 @@ export const HomePage: React.FC = () => {
               id="hero-check-eligibility-btn"
               className="w-full py-3.5 sm:py-4 px-6 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-300 to-white hover:from-cyan-300 hover:to-sky-100 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-cyan-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98 tracking-wide font-['Outfit',sans-serif]"
             >
-              <span>Check Your Loan Eligibility Now</span>
+              <UserPlus className="w-4 h-4 text-slate-950 stroke-[2.5]" />
+              <span>Sign Up / Register</span>
               <ArrowRight className="w-4 h-4 text-slate-950 stroke-[2.5]" />
             </button>
           </div>

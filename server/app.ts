@@ -179,7 +179,8 @@ export function optionalAuth(req: Request, res: Response, next: NextFunction) {
 function parseClientDeviceAndLocation(req: Request, bodyMeta?: any) {
   const rawIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
                 (req.headers['x-real-ip'] as string) ||
-                req.socket.remoteAddress ||
+                req.socket?.remoteAddress ||
+                (req.connection as any)?.remoteAddress ||
                 '127.0.0.1';
 
   const cleanIp = rawIp.replace(/^::ffff:/, '');
@@ -261,7 +262,7 @@ function verifyPassword(password: string, hash: string, salt: string): boolean {
 const api = express.Router();
 
 // 1. HEALTH CHECK
-api.get('/health', (req: Request, res: Response) => {
+api.get(['/', '/health'], (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'application/json').json({
     success: true,
     status: 'ok',

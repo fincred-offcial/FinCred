@@ -56,7 +56,7 @@ export { app };
 export default app;
 
 // In standalone execution, start listening
-const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY);
+const isServerless = Boolean(process.env.VERCEL || process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY);
 if (!isServerless) {
   startServer();
 }

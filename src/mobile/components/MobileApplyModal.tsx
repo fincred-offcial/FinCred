@@ -32,10 +32,14 @@ export const MobileApplyModal: React.FC<MobileApplyModalProps> = ({
   customer,
   onSuccess
 }) => {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [fullName, setFullName] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
   const [email, setEmail] = useState('');
+  const [dob, setDob] = useState('');
   const [panNumber, setPanNumber] = useState('');
+  const [panOrVoterId, setPanOrVoterId] = useState('');
   const [loanCategory, setLoanCategory] = useState<LoanCategory>('Personal / Business Loan');
   const [amountRequested, setAmountRequested] = useState<number>(200000);
   const [employmentType, setEmploymentType] = useState('Salaried');
@@ -53,9 +57,16 @@ export const MobileApplyModal: React.FC<MobileApplyModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       if (customer) {
+        const parts = (customer.fullName || '').trim().split(' ');
+        setFirstName(customer.firstName || parts[0] || '');
+        setLastName(customer.lastName || parts.slice(1).join(' ') || '');
         setFullName(customer.fullName || '');
         setMobileNumber(customer.mobileNumber || '');
         setEmail(customer.email || '');
+        setDob(customer.dob || customer.dateOfBirth || '');
+        setPanOrVoterId(customer.panOrVoterId || customer.panNumber || '');
+        setPanNumber(customer.panNumber || customer.panOrVoterId || '');
+        if (customer.monthlyIncome) setMonthlyIncome(customer.monthlyIncome);
       }
       if (selectedProduct) {
         if (selectedProduct.category === 'All Type Loan') {
@@ -77,8 +88,28 @@ export const MobileApplyModal: React.FC<MobileApplyModalProps> = ({
     e.preventDefault();
     setError(null);
 
-    if (!fullName.trim() || fullName.trim().length < 2) {
-      setError('Please provide your legal full name');
+    if (!firstName.trim()) {
+      setError('Please provide your First Name');
+      return;
+    }
+
+    if (!lastName.trim()) {
+      setError('Please provide your Last Name');
+      return;
+    }
+
+    if (!dob) {
+      setError('Please enter your Date of Birth (DOB)');
+      return;
+    }
+
+    if (!monthlyIncome || monthlyIncome <= 0) {
+      setError('Please enter your approximate Monthly Income');
+      return;
+    }
+
+    if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setError('Please enter a valid email address');
       return;
     }
 
@@ -88,9 +119,9 @@ export const MobileApplyModal: React.FC<MobileApplyModalProps> = ({
       return;
     }
 
-    const cleanPan = panNumber.trim().toUpperCase();
-    if (cleanPan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(cleanPan)) {
-      setError('Invalid PAN format (e.g. ABCDE1234F)');
+    const cleanId = (panOrVoterId || panNumber).trim().toUpperCase();
+    if (!cleanId || cleanId.length < 8) {
+      setError('Please enter a valid PAN Card or Voter ID Number');
       return;
     }
 
@@ -101,11 +132,12 @@ export const MobileApplyModal: React.FC<MobileApplyModalProps> = ({
 
     setLoading(true);
     try {
+      const combinedFullName = `${firstName.trim()} ${lastName.trim()}`.trim();
       const res = await appSubmitLoan({
-        fullName: fullName.trim(),
+        fullName: combinedFullName,
         mobileNumber: cleanMobile,
         email: email.trim() || undefined,
-        panNumber: cleanPan || undefined,
+        panNumber: cleanId,
         loanCategory,
         amountRequested,
         employmentType,
@@ -257,33 +289,67 @@ export const MobileApplyModal: React.FC<MobileApplyModalProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-slate-400 mb-1">Full Legal Name</label>
+                    <label className="block text-slate-400 mb-1">First Name *</label>
                     <input
                       type="text"
-                      value={fullName}
-                      onChange={e => setFullName(e.target.value)}
+                      required
+                      value={firstName}
+                      onChange={e => {
+                        setFirstName(e.target.value);
+                        setFullName(`${e.target.value} ${lastName}`.trim());
+                      }}
                       className="w-full px-3 py-2 bg-[#0A0F1D] border border-slate-700 rounded-xl text-white outline-none focus:border-blue-500"
-                      placeholder="Your full name"
+                      placeholder="e.g. Rahul"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-400 mb-1">Mobile Number</label>
+                    <label className="block text-slate-400 mb-1">Last Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={lastName}
+                      onChange={e => {
+                        setLastName(e.target.value);
+                        setFullName(`${firstName} ${e.target.value}`.trim());
+                      }}
+                      className="w-full px-3 py-2 bg-[#0A0F1D] border border-slate-700 rounded-xl text-white outline-none focus:border-blue-500"
+                      placeholder="e.g. Sharma"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-400 mb-1">Date of Birth (DOB) *</label>
+                    <input
+                      type="date"
+                      required
+                      value={dob}
+                      onChange={e => setDob(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#0A0F1D] border border-slate-700 rounded-xl text-white outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-400 mb-1">10-Digit Mobile Number *</label>
                     <input
                       type="tel"
+                      required
                       value={mobileNumber}
                       onChange={e => setMobileNumber(e.target.value.replace(/\D/g, ''))}
                       maxLength={10}
                       className="w-full px-3 py-2 bg-[#0A0F1D] border border-slate-700 rounded-xl text-white outline-none focus:border-blue-500 font-mono"
-                      placeholder="10-digit number"
+                      placeholder="9876543210"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">Email Address</label>
+                  <label className="block text-slate-400 mb-1">Email Address *</label>
                   <input
                     type="email"
+                    required
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     className="w-full px-3 py-2 bg-[#0A0F1D] border border-slate-700 rounded-xl text-white outline-none focus:border-blue-500"
@@ -331,18 +397,23 @@ export const MobileApplyModal: React.FC<MobileApplyModalProps> = ({
                   </div>
                 </div>
 
-                {/* PAN Number */}
+                {/* PAN / Voter ID Number */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-slate-300 font-medium">PAN Card Number</label>
+                    <label className="text-slate-300 font-medium">PAN Card / Voter ID Number *</label>
                     <span className="text-[10px] text-slate-400">Masked securely in admin</span>
                   </div>
                   <input
                     type="text"
-                    maxLength={10}
-                    value={panNumber}
-                    onChange={e => setPanNumber(e.target.value.toUpperCase())}
-                    placeholder="e.g. ABCDE1234F"
+                    required
+                    maxLength={16}
+                    value={panOrVoterId || panNumber}
+                    onChange={e => {
+                      const val = e.target.value.toUpperCase();
+                      setPanOrVoterId(val);
+                      setPanNumber(val);
+                    }}
+                    placeholder="e.g. ABCDE1234F or Voter ID"
                     className="w-full px-3 py-2.5 bg-[#121B2E] border border-slate-700 rounded-xl text-white uppercase font-mono tracking-wider outline-none focus:border-blue-500"
                   />
                 </div>

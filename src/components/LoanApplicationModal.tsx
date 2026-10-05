@@ -233,8 +233,9 @@ export const LoanApplicationModal: React.FC = () => {
 
   const displayPlatforms = getDisplayPlatforms();
 
-  // Validate Sub-step 1 before advancing to Sub-step 2
-  const handleProceedToStep2 = () => {
+  // Handle Form Submission -> Save Application in Firestore First -> Generate FC-YYYYMMDD-XXXXX ID
+  const handleSubmitForm = async (e: React.FormEvent) => {
+    e.preventDefault();
     setErrorMsg('');
 
     if (!firstName.trim()) {
@@ -252,8 +253,20 @@ export const LoanApplicationModal: React.FC = () => {
       return;
     }
 
+    if (!monthlyIncome || Number(monthlyIncome) <= 0) {
+      setErrorMsg('Please enter your approximate Monthly Income (₹).');
+      return;
+    }
+
     if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email.trim())) {
       setErrorMsg('Please enter a valid email address.');
+      return;
+    }
+
+    // PAN Card or Voter ID validation
+    const cleanId = (panOrVoterId || panNumber).trim().toUpperCase();
+    if (!cleanId || cleanId.length < 8) {
+      setErrorMsg('Please enter a valid PAN Card Number (e.g. ABCDE1234F) or Voter ID Number.');
       return;
     }
 
@@ -266,27 +279,6 @@ export const LoanApplicationModal: React.FC = () => {
     const cleanPin = pincode.trim();
     if (!cleanPin || !/^[1-9][0-9]{5}$/.test(cleanPin)) {
       setErrorMsg('Please enter a valid 6-digit residential pincode.');
-      return;
-    }
-
-    setFullName(`${firstName.trim()} ${lastName.trim()}`);
-    setFormPage(2);
-  };
-
-  // Handle Form Submission -> Save Application in Firestore First -> Generate FC-YYYYMMDD-XXXXX ID
-  const handleSubmitForm = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg('');
-
-    // PAN Card or Voter ID validation
-    const cleanId = (panOrVoterId || panNumber).trim().toUpperCase();
-    if (!cleanId || cleanId.length < 8) {
-      setErrorMsg('Please enter a valid PAN Card Number (e.g. ABCDE1234F) or Voter ID Number.');
-      return;
-    }
-
-    if (!monthlyIncome || Number(monthlyIncome) <= 0) {
-      setErrorMsg('Please provide your approximate monthly net income.');
       return;
     }
 
@@ -431,7 +423,7 @@ export const LoanApplicationModal: React.FC = () => {
                   FinCred Loan Application Flow
                 </h1>
                 <p className="text-[11px] text-slate-500 font-medium">
-                  {step === 'CUSTOMER_FORM' && `Step 2: Customer Information (${formPage === 1 ? 'Part 1: Contact & Identity' : 'Part 2: Financial Details'})`}
+                  {step === 'CUSTOMER_FORM' && 'Step 2: Customer Information & KYC Profile'}
                   {step === 'PARTNER_SELECTION' && 'Step 3: Choose Where You Want to Apply'}
                   {step === 'APPLICATION_IN_PROGRESS' && 'Application In Progress & Explore Other Options'}
                 </p>
@@ -539,34 +531,27 @@ export const LoanApplicationModal: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Progress Indicator for Customer Form */}
-                <div className="space-y-1.5 pt-1">
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
-                    <span>Customer Details: Part {formPage} of 2</span>
-                    <span>{formPage === 1 ? '50% Completed' : '100% Ready'}</span>
+                {/* UNIFIED CUSTOMER APPLICATION FORM */}
+                <form onSubmit={handleSubmitForm} className="space-y-5 animate-in fade-in duration-200">
+                  {/* Top Notice */}
+                  <div className="p-3 rounded-xl bg-blue-50/80 border border-blue-200 text-xs text-blue-900 flex items-center justify-between">
+                    <span className="font-semibold">Complete your basic details to view RBI-approved lender offers</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white">100% Digital</span>
                   </div>
-                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                    <div
-                      className="h-full bg-blue-600 rounded-full transition-all duration-300"
-                      style={{ width: formPage === 1 ? '50%' : '100%' }}
-                    />
-                  </div>
-                </div>
 
-                {/* FORM PAGE 1: Identity & Contact Information */}
-                {formPage === 1 && (
-                  <div className="space-y-4 animate-in fade-in duration-200">
+                  {/* Section 1: Personal & Identity Details */}
+                  <div className="space-y-3">
                     <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
                       <User className="w-4 h-4 text-blue-600" />
                       <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 font-['Outfit',sans-serif]">
-                        {isBusinessLoan ? 'Applicant & Contact Details' : 'Personal & Contact Details'}
+                        Personal, Financial & Identity Details
                       </h3>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       {/* First Name */}
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
                           First Name <span className="text-rose-500">*</span>
                         </label>
                         <input
@@ -578,13 +563,13 @@ export const LoanApplicationModal: React.FC = () => {
                             setFullName(`${e.target.value} ${lastName}`.trim());
                           }}
                           placeholder="e.g. Rahul"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                         />
                       </div>
 
                       {/* Last Name */}
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
                           Last Name <span className="text-rose-500">*</span>
                         </label>
                         <input
@@ -596,13 +581,13 @@ export const LoanApplicationModal: React.FC = () => {
                             setFullName(`${firstName} ${e.target.value}`.trim());
                           }}
                           placeholder="e.g. Sharma"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                         />
                       </div>
 
                       {/* Date of Birth (DOB) */}
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
                           Date of Birth (DOB) <span className="text-rose-500">*</span>
                         </label>
                         <input
@@ -610,13 +595,30 @@ export const LoanApplicationModal: React.FC = () => {
                           required
                           value={dob}
                           onChange={(e) => setDob(e.target.value)}
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-800"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-800"
+                        />
+                      </div>
+
+                      {/* Monthly Net Income */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Monthly Net Income (₹) <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          required
+                          min={1000}
+                          step={1000}
+                          value={monthlyIncome}
+                          onChange={(e) => setMonthlyIncome(e.target.value ? Number(e.target.value) : '')}
+                          placeholder="e.g. 45000"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                         />
                       </div>
 
                       {/* Email Address */}
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
                           Email Address <span className="text-rose-500">*</span>
                         </label>
                         <input
@@ -625,74 +627,13 @@ export const LoanApplicationModal: React.FC = () => {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="name@example.com"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                         />
                       </div>
 
-                      {/* Mobile Number */}
+                      {/* PAN Card or Voter ID Number */}
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          10-Digit Mobile Number <span className="text-rose-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-2.5 text-slate-400 text-sm font-semibold">+91</span>
-                          <input
-                            type="tel"
-                            required
-                            maxLength={10}
-                            value={mobileNumber}
-                            onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ''))}
-                            placeholder="9876543210"
-                            className="w-full pl-12 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Current Residential Pincode */}
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Current Pincode <span className="text-rose-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          maxLength={6}
-                          value={pincode}
-                          onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
-                          placeholder="6-digit pincode"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Next Button */}
-                    <div className="pt-3 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={handleProceedToStep2}
-                        className="py-3 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer"
-                      >
-                        <span>Next: Financial Profile</span>
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* FORM PAGE 2: Financial & Regulatory KYC Details */}
-                {formPage === 2 && (
-                  <form onSubmit={handleSubmitForm} className="space-y-4 animate-in fade-in duration-200">
-                    <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
-                      <CreditCard className="w-4 h-4 text-blue-600" />
-                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 font-['Outfit',sans-serif]">
-                        {isBusinessLoan ? 'Business & Commercial Profile' : 'Income & Loan Profile'}
-                      </h3>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      {/* PAN Card or Voter ID */}
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
                           PAN Card / Voter ID Number <span className="text-rose-500">*</span>
                         </label>
                         <input
@@ -705,16 +646,51 @@ export const LoanApplicationModal: React.FC = () => {
                             setPanNumber(val);
                           }}
                           placeholder="e.g. ABCDE1234F or Voter ID"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm uppercase tracking-wider font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm uppercase tracking-wider font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                         />
                         <span className="text-[10px] text-slate-400 mt-0.5 block">
                           Enter valid 10-digit PAN or Voter ID card number
                         </span>
                       </div>
 
+                      {/* 10-Digit Mobile Number */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          10-Digit Mobile Number <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2.5 text-slate-400 text-xs sm:text-sm font-semibold">+91</span>
+                          <input
+                            type="tel"
+                            required
+                            maxLength={10}
+                            value={mobileNumber}
+                            onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ''))}
+                            placeholder="9876543210"
+                            className="w-full pl-12 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Current Residential Pincode */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Current Pincode <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          maxLength={6}
+                          value={pincode}
+                          onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
+                          placeholder="6-digit pincode"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                        />
+                      </div>
+
                       {/* Required Loan Amount */}
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
                           Required Loan Amount (₹) <span className="text-rose-500">*</span>
                         </label>
                         <input
@@ -725,199 +701,93 @@ export const LoanApplicationModal: React.FC = () => {
                           value={amountRequested}
                           onChange={(e) => setAmountRequested(e.target.value ? Number(e.target.value) : '')}
                           placeholder="e.g. 200000"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                         />
                       </div>
 
-                      {/* BUSINESS LOAN SPECIFIC FIELDS */}
+                      {/* Employment Type / Business Type */}
                       {isBusinessLoan ? (
-                        <>
-                          {/* Business Type */}
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-1">
-                              Business Type <span className="text-rose-500">*</span>
-                            </label>
-                            <select
-                              required
-                              value={businessType}
-                              onChange={(e) => setBusinessType(e.target.value)}
-                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-800"
-                            >
-                              <option value="">Select Business Type</option>
-                              <option value="Sole Proprietorship">Sole Proprietorship</option>
-                              <option value="Partnership Firm">Partnership Firm</option>
-                              <option value="Private Limited Company">Private Limited Company</option>
-                              <option value="Limited Liability Partnership (LLP)">Limited Liability Partnership (LLP)</option>
-                              <option value="Self-Employed Professional">Self-Employed Professional / Trader</option>
-                            </select>
-                          </div>
-
-                          {/* Business Vintage */}
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-1">
-                              Business Vintage <span className="text-rose-500">*</span>
-                            </label>
-                            <select
-                              required
-                              value={businessVintage}
-                              onChange={(e) => setBusinessVintage(e.target.value)}
-                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-800"
-                            >
-                              <option value="">Select Business Vintage</option>
-                              <option value="Less than 1 Year">Less than 1 Year</option>
-                              <option value="1 to 3 Years">1 to 3 Years</option>
-                              <option value="3 to 5 Years">3 to 5 Years</option>
-                              <option value="More than 5 Years">More than 5 Years</option>
-                            </select>
-                          </div>
-
-                          {/* Business Turnover */}
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-1">
-                              Monthly / Annual Turnover <span className="text-rose-500">*</span>
-                            </label>
-                            <select
-                              required
-                              value={businessTurnover}
-                              onChange={(e) => setBusinessTurnover(e.target.value)}
-                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-800"
-                            >
-                              <option value="">Select Turnover Range</option>
-                              <option value="Under ₹10 Lakhs Annual">Under ₹10 Lakhs Annual</option>
-                              <option value="₹10 Lakhs - ₹25 Lakhs Annual">₹10 Lakhs - ₹25 Lakhs Annual</option>
-                              <option value="₹25 Lakhs - ₹1 Crore Annual">₹25 Lakhs - ₹1 Crore Annual</option>
-                              <option value="₹1 Crore - ₹5 Crores Annual">₹1 Crore - ₹5 Crores Annual</option>
-                              <option value="Above ₹5 Crores Annual">Above ₹5 Crores Annual</option>
-                            </select>
-                          </div>
-
-                          {/* Existing Business Loan / EMIs */}
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-1">
-                              Existing Business Loan / EMIs
-                            </label>
-                            <select
-                              value={existingBusinessLoan}
-                              onChange={(e) => setExistingBusinessLoan(e.target.value)}
-                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-800"
-                            >
-                              <option value="None">No Active Business Loans</option>
-                              <option value="1 Active Business Loan">1 Active Business Loan</option>
-                              <option value="2-3 Active Business Loans">2-3 Active Business Loans</option>
-                              <option value="4+ Active Loans">4+ Active Loans</option>
-                            </select>
-                          </div>
-                        </>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Business Type <span className="text-rose-500">*</span>
+                          </label>
+                          <select
+                            required
+                            value={businessType}
+                            onChange={(e) => setBusinessType(e.target.value)}
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-800"
+                          >
+                            <option value="">Select Business Type</option>
+                            <option value="Sole Proprietorship">Sole Proprietorship</option>
+                            <option value="Partnership Firm">Partnership Firm</option>
+                            <option value="Private Limited Company">Private Limited Company</option>
+                            <option value="Limited Liability Partnership (LLP)">Limited Liability Partnership (LLP)</option>
+                            <option value="Self-Employed Professional">Self-Employed Professional / Trader</option>
+                          </select>
+                        </div>
                       ) : (
-                        /* PERSONAL LOAN SPECIFIC FIELDS */
-                        <>
-                          {/* Employment Type */}
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-1">
-                              Employment Type <span className="text-rose-500">*</span>
-                            </label>
-                            <select
-                              required
-                              value={employmentType}
-                              onChange={(e) => setEmploymentType(e.target.value)}
-                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-800"
-                            >
-                              <option value="">Select Employment Type</option>
-                              <option value="Salaried">Salaried (Full-time / Corporate)</option>
-                              <option value="Self-Employed Professional">Self-Employed Professional (Doctor, CA, etc.)</option>
-                              <option value="Self-Employed Business">Self-Employed Business / Proprietorship</option>
-                              <option value="Private Limited / Partner">Private Limited Director / Partner</option>
-                              <option value="Other">Other</option>
-                            </select>
-                          </div>
-
-                          {/* Monthly Net Income */}
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-1">
-                              Monthly Net Income (₹) <span className="text-rose-500">*</span>
-                            </label>
-                            <input
-                              type="number"
-                              required
-                              min={1000}
-                              step={1000}
-                              value={monthlyIncome}
-                              onChange={(e) => setMonthlyIncome(e.target.value ? Number(e.target.value) : '')}
-                              placeholder="e.g. 45000"
-                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                            />
-                          </div>
-
-                          {/* Existing Ongoing Loans */}
-                          <div className="sm:col-span-2">
-                            <label className="block text-xs font-semibold text-slate-700 mb-1">
-                              Existing Active Loans / EMIs
-                            </label>
-                            <select
-                              value={existingLoan}
-                              onChange={(e) => setExistingLoan(e.target.value)}
-                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-800"
-                            >
-                              <option value="None">No Active Loans (Clean Profile)</option>
-                              <option value="1 Active Loan">1 Active Loan</option>
-                              <option value="2-3 Active Loans">2 to 3 Active Loans</option>
-                              <option value="4+ Active Loans">4 or more Active Loans</option>
-                            </select>
-                          </div>
-                        </>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Employment Type <span className="text-rose-500">*</span>
+                          </label>
+                          <select
+                            required
+                            value={employmentType}
+                            onChange={(e) => setEmploymentType(e.target.value)}
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-800"
+                          >
+                            <option value="">Select Employment Type</option>
+                            <option value="Salaried">Salaried (Full-time / Corporate)</option>
+                            <option value="Self-Employed Professional">Self-Employed Professional (Doctor, CA, etc.)</option>
+                            <option value="Self-Employed Business">Self-Employed Business / Proprietorship</option>
+                            <option value="Private Limited / Partner">Private Limited Director / Partner</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
                       )}
                     </div>
+                  </div>
 
-                    {/* Consent & Regulatory Compliance */}
-                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2">
-                      <label className="flex items-start gap-2.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={hasConsented}
-                          onChange={(e) => setHasConsented(e.target.checked)}
-                          className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="text-[11px] leading-relaxed text-slate-700">
-                          I authorize FinCred to save my customer application record and determine available partner options. I understand that external lending partners perform credit evaluations as per RBI guidelines.
-                        </span>
-                      </label>
-                      <p className="text-[10px] text-slate-600 flex items-center gap-1.5">
-                        <Lock className="w-3 h-3 text-slate-600 shrink-0" />
-                        256-bit SSL encrypted. External partner links open ONLY after submission.
-                      </p>
-                    </div>
+                  {/* Consent & Regulatory Compliance */}
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2">
+                    <label className="flex items-start gap-2.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={hasConsented}
+                        onChange={(e) => setHasConsented(e.target.checked)}
+                        className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-[11px] leading-relaxed text-slate-700">
+                        I authorize FinCred to save my application record and determine available partner options. I confirm all details provided (First Name, Last Name, DOB, Income, Email, and PAN / Voter ID) are accurate.
+                      </span>
+                    </label>
+                    <p className="text-[10px] text-slate-500 flex items-center gap-1.5">
+                      <Lock className="w-3 h-3 text-slate-600 shrink-0" />
+                      256-bit SSL encrypted. 100% Paperless Digital Processing.
+                    </p>
+                  </div>
 
-                    {/* Buttons: Back and Submit */}
-                    <div className="pt-2 flex items-center justify-between gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setFormPage(1)}
-                        className="py-3 px-4 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                        <span>Back</span>
-                      </button>
-
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="flex-1 py-3 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            <span>Saving in FinCred Database...</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>Submit Details & View Available Loan Options</span>
-                            <ChevronRight className="w-4 h-4" />
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </form>
-                )}
+                  {/* Submit Button */}
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Saving Application in FinCred Database...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Submit Details & View Available Loan Options</span>
+                          <ChevronRight className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
               </div>
             )}
 
