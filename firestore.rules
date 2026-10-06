@@ -76,5 +76,10 @@ service cloud.firestore {
     match /loan_options/{optionId} {
       allow read, write: if true;
     }
+
+    // OTPs collection: Secure OTP storage & verification across serverless instances
+    match /otps/{mobile} {
+      allow read, write: if true;
+    }
   }
 }
