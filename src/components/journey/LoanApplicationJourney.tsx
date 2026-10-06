@@ -767,31 +767,26 @@ export const LoanApplicationJourney: React.FC = () => {
           )}
 
           {/* 3D Abstract Floating Shapes Background */}
-          {!isDedicatedAuthRoute && (
-            <>
-              {/* 3D Sphere 1 */}
-              <div className="absolute top-48 right-12 w-20 h-20 rounded-full bg-gradient-to-tr from-blue-400/40 via-sky-300/50 to-white/70 shadow-2xl shadow-blue-500/30 backdrop-blur-sm pointer-events-none transform rotate-12 animate-pulse" />
-              {/* 3D Sphere 2 */}
-              <div className="absolute top-96 left-8 w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-400/40 to-blue-600/30 shadow-xl shadow-cyan-500/20 backdrop-blur-sm pointer-events-none" />
-              {/* Soft-glow decorative blobs */}
-              <div className="absolute top-28 right-0 -mr-20 w-88 sm:w-[480px] h-88 sm:h-[480px] rounded-full bg-gradient-to-b from-blue-300/30 via-sky-200/40 to-transparent blur-3xl pointer-events-none" />
-              <div className="absolute top-1/2 left-0 -ml-24 w-80 sm:w-96 h-80 sm:h-96 rounded-full bg-gradient-to-tr from-sky-300/30 to-indigo-200/30 blur-3xl pointer-events-none" />
-              <div className="absolute bottom-10 right-1/4 w-88 h-88 rounded-full bg-indigo-100/40 blur-3xl pointer-events-none" />
+          {/* 3D Sphere 1 */}
+          <div className="absolute top-48 right-12 w-20 h-20 rounded-full bg-gradient-to-tr from-blue-400/40 via-sky-300/50 to-white/70 shadow-2xl shadow-blue-500/30 backdrop-blur-sm pointer-events-none transform rotate-12 animate-pulse" />
+          {/* 3D Sphere 2 */}
+          <div className="absolute top-96 left-8 w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-400/40 to-blue-600/30 shadow-xl shadow-cyan-500/20 backdrop-blur-sm pointer-events-none" />
+          {/* Soft-glow decorative blobs */}
+          <div className="absolute top-28 right-0 -mr-20 w-88 sm:w-[480px] h-88 sm:h-[480px] rounded-full bg-gradient-to-b from-blue-300/30 via-sky-200/40 to-transparent blur-3xl pointer-events-none" />
+          <div className="absolute top-1/2 left-0 -ml-24 w-80 sm:w-96 h-80 sm:h-96 rounded-full bg-gradient-to-tr from-sky-300/30 to-indigo-200/30 blur-3xl pointer-events-none" />
+          <div className="absolute bottom-10 right-1/4 w-88 h-88 rounded-full bg-indigo-100/40 blur-3xl pointer-events-none" />
 
-              {/* Floating 3D Gold Accent Coin Pill */}
-              <div className="hidden sm:flex absolute top-64 right-1/3 items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/30 pointer-events-none transform -rotate-6">
-                <span className="w-4 h-4 rounded-full bg-white flex items-center justify-center text-[10px] font-bold text-amber-600">₹</span>
-                <span>Fast Disbursement</span>
-              </div>
-            </>
-          )}
+          {/* Floating 3D Gold Accent Coin Pill */}
+          <div className="hidden sm:flex absolute top-64 right-1/3 items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/30 pointer-events-none transform -rotate-6">
+            <span className="w-4 h-4 rounded-full bg-white flex items-center justify-center text-[10px] font-bold text-amber-600">₹</span>
+            <span>Fast Disbursement</span>
+          </div>
 
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 relative z-10">
             {/* Centered Main Content */}
             <div className="max-w-xl mx-auto space-y-4">
               {/* 4 Mini Benefit Circular Icon Cards */}
-              {!isDedicatedAuthRoute && (
-                <div className="p-3 rounded-2xl bg-blue-50/80 border border-blue-100/90 shadow-xs w-full">
+              <div className="p-3 rounded-2xl bg-blue-50/80 border border-blue-100/90 shadow-xs w-full">
                   <div className="grid grid-cols-4 gap-2 text-center">
                     {/* Personal Loan */}
                     <div className="flex flex-col items-center group cursor-default">
@@ -830,7 +825,6 @@ export const LoanApplicationJourney: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              )}
 
                 {/* The Prominent Mobile Number Card */}
                 <div id="otp-verification-card" className="bg-white rounded-3xl p-6 sm:p-7 shadow-2xl shadow-blue-900/10 border border-blue-100/90 max-w-lg space-y-4 scroll-mt-24">

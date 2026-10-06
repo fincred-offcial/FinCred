@@ -18,8 +18,7 @@ import {
   Check,
   ExternalLink,
   Layers,
-  ChevronRight,
-  UserPlus
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.js';
 import { EmiCalculatorSection } from '../components/EmiCalculatorSection.js';
@@ -47,9 +46,13 @@ export const HomePage: React.FC = () => {
     }
   };
 
-  // Handle Main Hero CTA: Open Sign Up Option
-  const handleCheckEligibility = () => {
-    navigate('/Sign-up');
+  // Handle Main Hero CTA: Sign Up / Login (Directs to Login/OTP flow or User Portal if already logged in)
+  const handleHeroAuth = () => {
+    if (isCustomerLoggedIn) {
+      navigate('/dashboard');
+    } else {
+      navigate('/login');
+    }
   };
 
   return (
@@ -136,16 +139,16 @@ export const HomePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Main Loan CTA: Large Rounded Button */}
+          {/* Main Hero CTA: Sign Up / Login */}
           <div className="pt-2 max-w-md mx-auto">
             <button
               type="button"
-              onClick={handleCheckEligibility}
-              id="hero-check-eligibility-btn"
+              onClick={handleHeroAuth}
+              id="hero-auth-btn"
               className="w-full py-3.5 sm:py-4 px-6 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-300 to-white hover:from-cyan-300 hover:to-sky-100 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-cyan-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98 tracking-wide font-['Outfit',sans-serif]"
             >
-              <UserPlus className="w-4 h-4 text-slate-950 stroke-[2.5]" />
-              <span>Sign Up / Register</span>
+              <UserCheck className="w-4 h-4 text-slate-950 stroke-[2.5]" />
+              <span>Sign Up / Login</span>
               <ArrowRight className="w-4 h-4 text-slate-950 stroke-[2.5]" />
             </button>
           </div>
