@@ -1553,13 +1553,10 @@ api.delete('/admin/partner-platforms/:id', requireAdmin, async (req: Request, re
 });
 
 // ==========================================
-// DUAL MOUNTING (STANDALONE & SERVERLESS PROXY)
+// API MOUNTING (STANDARD /api ROUTING)
 // ==========================================
-// Mount under /api
+// Mount core API router strictly under /api
 app.use('/api', api);
-
-// Also mount root router to catch serverless setups where the hosting proxy strips /api
-app.use(api);
 
 // ==========================================
 // API 404 & ERROR HANDLING (JSON GUARANTEE)
