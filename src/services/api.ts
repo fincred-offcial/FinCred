@@ -162,15 +162,54 @@ export async function fetchCustomerProfile(customerIdOrMobile?: string, token?: 
   return data.data || data.customer || data;
 }
 
-export async function verifyOtp(mobileNumber: string, otp: string, fullName?: string): Promise<{ success: boolean; customer: Customer; token: string }> {
-  const res = await fetch('/api/auth/verify-otp', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mobileNumber, otp, fullName })
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Invalid OTP code');
-  return data;
+export async function verifyOtp(mobileNumber: string, otp: string, fullName?: string): Promise<{ success: boolean; customer: Customer; token: string; data?: any }> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const res = await fetch('/api/auth/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mobileNumber, otp, fullName }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data || data.success === false) {
+      let errorMsg = 'Invalid or expired OTP code. Please request a new code.';
+      if (data && typeof data === 'object') {
+        if (typeof data.error === 'string' && data.error.trim()) {
+          errorMsg = data.error;
+        } else if (data.error && typeof data.error === 'object' && typeof data.error.message === 'string') {
+          errorMsg = data.error.message;
+        } else if (typeof data.message === 'string' && data.message.trim()) {
+          errorMsg = data.message;
+        }
+      }
+      throw new Error(errorMsg);
+    }
+
+    const token = data.token || data.data?.token;
+    const customer = data.customer || data.data?.customer;
+
+    if (!token || !customer) {
+      throw new Error('Authentication succeeded but session token is missing. Please retry.');
+    }
+
+    return {
+      success: true,
+      token,
+      customer,
+      data: data.data || data
+    };
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Verification request timed out. Please check your internet connection and try again.');
+    }
+    throw err;
+  }
 }
 
 export async function updateCustomerProfile(

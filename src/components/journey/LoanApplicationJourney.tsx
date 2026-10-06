@@ -300,30 +300,37 @@ export const LoanApplicationJourney: React.FC = () => {
 
     try {
       const res = await verifyOtp(mobileNumber.trim(), fullOtp, registeredName || fullName || 'Valued Borrower');
-      if (res.success && res.customer && res.token) {
-        setCustomerSession(res.customer, res.token);
-        if (res.customer.fullName && res.customer.fullName !== 'Valued Customer') {
-          setFullName(res.customer.fullName);
+      const customer = res.customer || (res as any).data?.customer;
+      const token = res.token || (res as any).data?.token;
+
+      if (customer && token) {
+        setCustomerSession(customer, token);
+        if (customer.fullName && customer.fullName !== 'Valued Customer') {
+          setFullName(customer.fullName);
         }
-        if (res.customer.email) setEmail(res.customer.email);
-        if (res.customer.panNumber) setPanNumber(res.customer.panNumber);
-        if (res.customer.dob) setDob(res.customer.dob);
-        if (res.customer.pincode) setPincode(res.customer.pincode);
-        if (res.customer.monthlyIncome) setMonthlyIncome(String(res.customer.monthlyIncome));
-        if (res.customer.requiredLoanAmount) setAmountRequested(String(res.customer.requiredLoanAmount));
+        if (customer.email) setEmail(customer.email);
+        if (customer.panNumber) setPanNumber(customer.panNumber);
+        if (customer.dob) setDob(customer.dob);
+        if (customer.pincode) setPincode(customer.pincode);
+        if (customer.monthlyIncome) setMonthlyIncome(String(customer.monthlyIncome));
+        if (customer.requiredLoanAmount) setAmountRequested(String(customer.requiredLoanAmount));
 
-        // Log timeline activity
-        logUserActivity({
-          activityType: 'auth_success',
-          description: 'Mobile number entered and verified successfully',
-          customerId: res.customer.customerId,
-          userMobile: mobileNumber.trim(),
-          userName: res.customer.fullName,
-          metadata: { mobile: mobileNumber.trim() }
-        });
+        // Non-blocking user activity logging
+        try {
+          logUserActivity({
+            activityType: 'auth_success',
+            description: 'Mobile number entered and verified successfully',
+            customerId: customer.customerId,
+            userMobile: mobileNumber.trim(),
+            userName: customer.fullName,
+            metadata: { mobile: mobileNumber.trim() }
+          });
+        } catch {}
 
-        // Navigate customer directly to Dashboard set to Home (First login home option)
-        navigate('/dashboard?tab=home');
+        // Navigate customer immediately to User Portal Dashboard
+        navigate('/dashboard?tab=home', { replace: true });
+      } else {
+        throw new Error('Verification completed but customer session could not be established. Please retry.');
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Invalid verification code. Please check and re-enter.');

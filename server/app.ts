@@ -475,6 +475,19 @@ api.post('/auth/verify-otp', otpVerifyRateLimiter, async (req: Request, res: Res
     if (updated) customer = updated;
   }
 
+  if (!customer) {
+    customer = {
+      customerId: `cust-${Date.now().toString(36)}`,
+      fullName: fullName || 'Valued Customer',
+      mobileNumber: cleanMobile,
+      source: 'web',
+      status: 'Verified',
+      mobileVerified: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+  }
+
   // Issue cryptographically signed token valid for 30 days
   const token = signCustomerToken(customer.customerId, customer.mobileNumber);
   const sanitized = sanitizeCustomer(customer);
