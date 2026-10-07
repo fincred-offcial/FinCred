@@ -72,8 +72,7 @@ const AppContent: React.FC = () => {
   }, [location.pathname, navigate]);
 
   const isAdminRoute =
-    location.pathname.toLowerCase().startsWith('/admin-login') ||
-    location.pathname.toLowerCase().startsWith('/admin-dashboard');
+    location.pathname.toLowerCase().startsWith('/admin');
 
   const isMobileAppRoute =
     location.pathname.toLowerCase().startsWith('/app') ||
@@ -116,11 +115,16 @@ const AppContent: React.FC = () => {
 
       <div className="flex-1">
         <Routes>
+          {/* Public Home & Registration / Login */}
           <Route path="/" element={<HomePage />} />
           <Route path="/Sign-up" element={<SignUpPage />} />
           <Route path="/sign-up" element={<Navigate to="/Sign-up" replace />} />
           <Route path="/signup" element={<Navigate to="/Sign-up" replace />} />
+          <Route path="/sign" element={<Navigate to="/Sign-up" replace />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/portal-login" element={<LoginPage />} />
+
+          {/* User Portal / Customer Portal */}
           <Route
             path="/dashboard"
             element={
@@ -129,6 +133,12 @@ const AppContent: React.FC = () => {
               </ProtectedCustomerRoute>
             }
           />
+          <Route path="/user-portal" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/customer-portal" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/portal" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/user" element={<Navigate to="/dashboard" replace />} />
+
+          {/* Customer Applications & Profile */}
           <Route
             path="/applications"
             element={
@@ -138,9 +148,17 @@ const AppContent: React.FC = () => {
             }
           />
           <Route path="/profile" element={<ProtectedCustomerRoute><ProfilePage /></ProtectedCustomerRoute>} />
+
+          {/* Admin Portal & Operations */}
           <Route path="/Admin-login" element={<AdminLoginPage />} />
-          <Route path="/admin-login" element={<Navigate to="/Admin-login" replace />} />
+          <Route path="/admin-login" element={<AdminLoginPage />} />
+          <Route path="/admin" element={<Navigate to="/Admin-login" replace />} />
+          <Route path="/admin-portal" element={<Navigate to="/Admin-login" replace />} />
+          <Route path="/admin/login" element={<Navigate to="/Admin-login" replace />} />
           <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
+          <Route path="/admin/dashboard" element={<Navigate to="/admin-dashboard" replace />} />
+
+          {/* Catch-all fallback to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

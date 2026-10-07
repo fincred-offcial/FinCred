@@ -10,6 +10,8 @@ import {
   verifyToken,
   timingSafeCompare,
   generateSecureOtp,
+  signOtpToken,
+  verifyOtpToken,
   createRateLimiter,
   TokenPayload
 } from './auth.js';
@@ -40,10 +42,24 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   }
 
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-otp-token');
 
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
+  }
+  next();
+});
+
+// Safeguard: In serverless hosting (e.g., Vercel), if req.body has already been read/parsed by the runtime,
+// mark req._body = true so express.json() does not hang waiting for an already drained stream.
+app.use((req: any, _res: Response, next: NextFunction) => {
+  if (req.body !== undefined && req.body !== null) {
+    if (typeof req.body === 'string') {
+      try {
+        req.body = JSON.parse(req.body);
+      } catch {}
+    }
+    req._body = true;
   }
   next();
 });
@@ -306,6 +322,7 @@ api.post('/customer/continue', otpRateLimiter, async (req: Request, res: Respons
     // Cryptographically secure 6-digit OTP
     const otpCode = generateSecureOtp();
     await firestoreDb.setOtp(cleanMobile, otpCode);
+    const otpToken = signOtpToken(cleanMobile, otpCode, 300);
 
     if (!existing) {
       existing = await firestoreDb.upsertCustomer(
@@ -336,7 +353,8 @@ api.post('/customer/continue', otpRateLimiter, async (req: Request, res: Respons
       customerId: existing?.customerId,
       expiresInSeconds: 300,
       message: `Verification code dispatched to +91 ${cleanMobile}`,
-      testOtp: otpCode
+      testOtp: otpCode,
+      otpToken
     };
 
     return res.status(200).json({
@@ -401,6 +419,7 @@ api.post('/auth/send-otp', otpRateLimiter, async (req: Request, res: Response) =
 
   const otpCode = generateSecureOtp();
   await firestoreDb.setOtp(cleanMobile, otpCode);
+  const otpToken = signOtpToken(cleanMobile, otpCode, 300);
 
   firestoreDb.recordActivity({
     mobileNumber: cleanMobile,
@@ -420,7 +439,8 @@ api.post('/auth/send-otp', otpRateLimiter, async (req: Request, res: Response) =
     deliveryStatus: 'DELIVERED_VIA_SMS_GATEWAY',
     isRegistered: !!(existing && existing.fullName && existing.fullName !== 'Valued Customer'),
     customerName: existing?.fullName || null,
-    testOtp: otpCode
+    testOtp: otpCode,
+    otpToken
   };
 
   return res.json(payload);
@@ -430,7 +450,7 @@ api.post('/auth/send-otp', otpRateLimiter, async (req: Request, res: Response) =
 api.post('/auth/verify-otp', otpVerifyRateLimiter, async (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'application/json');
   const rawMobile = req.body.mobileNumber || req.body.mobile;
-  const { otp, fullName } = req.body;
+  const { otp, fullName, otpToken } = req.body;
 
   if (!rawMobile || !/^[6-9]\d{9}$/.test(String(rawMobile).trim())) {
     return res.status(400).json({
@@ -449,8 +469,14 @@ api.post('/auth/verify-otp', otpVerifyRateLimiter, async (req: Request, res: Res
   const cleanMobile = String(rawMobile).trim();
   const cleanOtp = String(otp).trim();
 
-  // Validate OTP against Firestore/memory, with 123456 as safe developer fallback
-  const isValid = (await firestoreDb.verifyOtp(cleanMobile, cleanOtp)) || cleanOtp === '123456';
+  // Validate OTP:
+  // 1. Instant mathematical HMAC token validation (zero latency, resilient across serverless cold starts)
+  // 2. Database/in-memory OTP validation
+  // 3. 123456 safe fallback
+  const candidateToken = otpToken || req.headers['x-otp-token'];
+  const isTokenValid = candidateToken ? verifyOtpToken(cleanMobile, cleanOtp, String(candidateToken)) : false;
+  const isDbValid = isTokenValid ? true : await firestoreDb.verifyOtp(cleanMobile, cleanOtp);
+  const isValid = isTokenValid || isDbValid || cleanOtp === '123456';
 
   if (!isValid) {
     return res.status(400).json({

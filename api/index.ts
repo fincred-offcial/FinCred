@@ -1,8 +1,13 @@
 import app from '../server/app.js';
 
 export default function handler(req: any, res: any) {
-  // If Vercel has already parsed request body, mark it so body-parser does not re-read stream
-  if (req.body && typeof req.body === 'object') {
+  // If Vercel has already parsed or read the request body, prevent body-parser from hanging on drained stream
+  if (req.body !== undefined && req.body !== null) {
+    if (typeof req.body === 'string') {
+      try {
+        req.body = JSON.parse(req.body);
+      } catch {}
+    }
     (req as any)._body = true;
   }
 

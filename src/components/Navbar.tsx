@@ -344,7 +344,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onExploreLoanOptions, onOpenDown
                 className="w-full py-3 px-4 rounded-xl bg-slate-900 text-white font-bold text-sm text-center hover:bg-slate-800 flex items-center justify-center gap-2 shadow-xs"
               >
                 <LogIn className="w-4 h-4 text-emerald-400" />
-                <span>Portal Login</span>
+                <span>Portal Login / Sign Up</span>
+              </Link>
+              <Link
+                to="/admin-login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full py-2 px-3 rounded-lg text-slate-500 hover:text-slate-700 text-[11px] font-semibold text-center flex items-center justify-center gap-1 transition-colors"
+              >
+                <span>Staff / Admin Portal</span>
               </Link>
             </div>
           )}

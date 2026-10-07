@@ -87,6 +87,7 @@ export const LoanApplicationJourney: React.FC = () => {
 
   const [otpSent, setOtpSent] = useState(false);
   const [activeOtpCode, setActiveOtpCode] = useState<string | null>(null);
+  const [currentOtpToken, setCurrentOtpToken] = useState<string | null>(null);
   const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']); // NO auto-fill! User must type manually
   const [timer, setTimer] = useState(45);
   const [canResend, setCanResend] = useState(false);
@@ -221,6 +222,9 @@ export const LoanApplicationJourney: React.FC = () => {
       // Triggers top notification banner & in-card notification
       const receivedOtp = res.testOtp || '123456';
       setActiveOtpCode(receivedOtp);
+      if (res.otpToken) {
+        setCurrentOtpToken(res.otpToken);
+      }
 
       if (res.isRegistered !== undefined) {
         setIsRegisteredNumber(res.isRegistered);
@@ -299,7 +303,12 @@ export const LoanApplicationJourney: React.FC = () => {
     setErrorMessage('');
 
     try {
-      const res = await verifyOtp(mobileNumber.trim(), fullOtp, registeredName || fullName || 'Valued Borrower');
+      const res = await verifyOtp(
+        mobileNumber.trim(),
+        fullOtp,
+        registeredName || fullName || 'Valued Borrower',
+        currentOtpToken || undefined
+      );
       const customer = res.customer || (res as any).data?.customer;
       const token = res.token || (res as any).data?.token;
 

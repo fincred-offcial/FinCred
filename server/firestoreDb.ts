@@ -749,16 +749,16 @@ class FirestoreCentralDatabase {
       attempts: 0
     };
     try {
-      // Fire-and-forget background sync to Firestore so HTTP response is returned immediately
-      Promise.race([
+      // Await Firestore persistence so serverless instances do not terminate before the record is saved
+      await Promise.race([
         setDoc(doc(serverDb, 'otps', cleanMobile), {
           otp,
           expiresAt,
           attempts: 0,
           createdAt: new Date().toISOString()
         }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
-      ]).catch(() => {});
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500))
+      ]);
     } catch (e) {
       // In-memory record acts as zero-latency fallback
     }
@@ -776,12 +776,12 @@ class FirestoreCentralDatabase {
     // Check memory cache first (instant 0ms)
     let record = this.otps[cleanMobile];
 
-    // If not in local instance memory (e.g. serverless cold start), read from Firestore with 1.5s max race
+    // If not in local instance memory (e.g. serverless cold start), read from Firestore with 2.5s max race
     if (!record) {
       try {
         const snap: any = await Promise.race([
           getDoc(doc(serverDb, 'otps', cleanMobile)),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1500))
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500))
         ]);
         if (snap && snap.exists && snap.exists()) {
           record = snap.data() as any;

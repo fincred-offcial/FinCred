@@ -91,6 +91,7 @@ export async function customerContinue(mobileNumber: string): Promise<{
     customerName?: string | null;
     customerId?: string;
     testOtp?: string;
+    otpToken?: string;
     message?: string;
     expiresInSeconds?: number;
   };
@@ -99,6 +100,7 @@ export async function customerContinue(mobileNumber: string): Promise<{
   customerName?: string | null;
   customerId?: string;
   testOtp?: string;
+  otpToken?: string;
   message?: string;
 }> {
   const clean = mobileNumber.trim().replace(/\D/g, '').slice(-10);
@@ -112,6 +114,12 @@ export async function customerContinue(mobileNumber: string): Promise<{
     const errorMsg = data.error?.message || data.error || 'Unable to continue';
     throw new Error(errorMsg);
   }
+  const token = data.otpToken || data.data?.otpToken;
+  if (token) {
+    try {
+      sessionStorage.setItem('fc_latest_otp_token', token);
+    } catch {}
+  }
   return data;
 }
 
@@ -119,6 +127,7 @@ export async function sendOtp(mobileNumber: string): Promise<{
   success: boolean;
   message: string;
   testOtp?: string;
+  otpToken?: string;
   expiresInSeconds?: number;
   isRegistered?: boolean;
   customerName?: string | null;
@@ -135,10 +144,17 @@ export async function sendOtp(mobileNumber: string): Promise<{
     throw new Error(msg);
   }
   const payload = data.data || data;
+  const token = payload.otpToken || data.otpToken;
+  if (token) {
+    try {
+      sessionStorage.setItem('fc_latest_otp_token', token);
+    } catch {}
+  }
   return {
     success: true,
     message: payload.message || data.message || `Verification code sent to +91 ${clean}`,
     testOtp: payload.testOtp || data.testOtp || '123456',
+    otpToken: token,
     expiresInSeconds: payload.expiresInSeconds || data.expiresInSeconds || 300,
     isRegistered: payload.isRegistered !== undefined ? payload.isRegistered : data.isRegistered,
     customerName: payload.customerName !== undefined ? payload.customerName : data.customerName
@@ -162,15 +178,27 @@ export async function fetchCustomerProfile(customerIdOrMobile?: string, token?: 
   return data.data || data.customer || data;
 }
 
-export async function verifyOtp(mobileNumber: string, otp: string, fullName?: string): Promise<{ success: boolean; customer: Customer; token: string; data?: any }> {
+export async function verifyOtp(mobileNumber: string, otp: string, fullName?: string, otpToken?: string): Promise<{ success: boolean; customer: Customer; token: string; data?: any }> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  // Resilient 25s timeout for serverless cold starts
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+  const activeOtpToken = otpToken || (() => {
+    try {
+      return sessionStorage.getItem('fc_latest_otp_token') || undefined;
+    } catch {
+      return undefined;
+    }
+  })();
 
   try {
     const res = await fetch('/api/auth/verify-otp', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mobileNumber, otp, fullName }),
+      headers: {
+        'Content-Type': 'application/json',
+        ...(activeOtpToken ? { 'x-otp-token': activeOtpToken } : {})
+      },
+      body: JSON.stringify({ mobileNumber, otp, fullName, otpToken: activeOtpToken }),
       signal: controller.signal
     });
     clearTimeout(timeoutId);

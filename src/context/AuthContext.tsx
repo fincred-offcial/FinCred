@@ -72,10 +72,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
-  // Admin Session
+  // Admin Session (Persistent across tabs and refreshes)
   const [adminToken, setAdminToken] = useState<string | null>(() => {
     try {
-      return sessionStorage.getItem('fc_admin_token');
+      return localStorage.getItem('fc_admin_token') || sessionStorage.getItem('fc_admin_token');
     } catch {
       return null;
     }
@@ -164,6 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const setAdminSession = (token: string) => {
     setAdminToken(token);
     try {
+      localStorage.setItem('fc_admin_token', token);
       sessionStorage.setItem('fc_admin_token', token);
     } catch (e) {
       console.error(e);
@@ -173,6 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const adminLogout = () => {
     setAdminToken(null);
     try {
+      localStorage.removeItem('fc_admin_token');
       sessionStorage.removeItem('fc_admin_token');
     } catch (e) {
       console.error(e);

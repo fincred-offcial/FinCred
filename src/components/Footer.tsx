@@ -67,13 +67,18 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDownloadApp }) => {
                   </a>
                 </li>
                 <li>
-                  <a href="/#loan-options" className="hover:text-blue-400 transition-colors">
-                    Loan Options
+                  <a href="/dashboard" className="hover:text-blue-400 transition-colors">
+                    User Portal
                   </a>
                 </li>
                 <li>
-                  <a href="/#how-it-works" className="hover:text-blue-400 transition-colors">
-                    How It Works
+                  <a href="/admin-login" className="hover:text-amber-400 text-slate-400 transition-colors">
+                    Admin Portal
+                  </a>
+                </li>
+                <li>
+                  <a href="/#loan-options" className="hover:text-blue-400 transition-colors">
+                    Loan Options
                   </a>
                 </li>
                 <li>
