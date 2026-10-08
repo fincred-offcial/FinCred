@@ -41,14 +41,23 @@ export const DEFAULT_BANNERS: Banner[] = [
   }
 ];
 
+export const DEFAULT_SETTINGS: AdminSettings = {
+  choiceConnectPersonalLoanUrl: 'https://choiceconnect.in/referral/loan/personal-loan/QzAxMTkyOTg=?lead_source=Y29ubmVjdF9yZWZlcnJhbF9saW5r',
+  personalBusinessLoanUrl: 'https://www.werize.com/loan-saving-agent-unnao-FinCred-personal-loan-3LIBPj40asdAPudzvFhPdU',
+  instantLoanUrl: 'https://truebalance.onelink.me/bMoN/dlfim5uk',
+  allTypeLoanUrl: 'https://sdk.ruloans.com/?client_type=b2b_app&loan_type=personal_loan&auth_token=586994%7Cl5C67vJQndNESetPp7pcWqcejaZd4iN3VtJZLPKze6dedf38',
+  safeUpiUrl: 'https://r.navi.com/t3HqoB',
+  updatedAt: new Date().toISOString()
+};
+
 export async function fetchSettings(): Promise<AdminSettings> {
   try {
     const res = await fetch('/api/settings');
     if (!res.ok) throw new Error('Failed to fetch settings');
     return await res.json();
   } catch (err) {
-    console.warn('Network issue fetching settings, fallback in place:', err);
-    throw err;
+    console.warn('Network issue fetching settings, using default settings fallback:', err);
+    return DEFAULT_SETTINGS;
   }
 }
 
@@ -765,13 +774,19 @@ export async function appSubmitLoan(params: {
 }
 
 export async function appFetchMyApplications(customerId?: string, mobile?: string): Promise<LoanApplication[]> {
-  const params = new URLSearchParams();
-  if (customerId) params.append('customerId', customerId);
-  if (mobile) params.append('mobile', mobile);
+  try {
+    const params = new URLSearchParams();
+    if (customerId) params.append('customerId', customerId);
+    if (mobile) params.append('mobile', mobile);
 
-  const res = await fetch(`/api/applications/my?${params.toString()}`);
-  if (!res.ok) throw new Error('Failed to load applications');
-  return res.json();
+    const res = await fetch(`/api/applications/my?${params.toString()}`);
+    if (!res.ok) return [];
+    const data = await res.json().catch(() => []);
+    return Array.isArray(data) ? data : (data.applications || []);
+  } catch (err) {
+    console.warn('Notice loading applications, using empty list fallback:', err);
+    return [];
+  }
 }
 
 // ==========================================

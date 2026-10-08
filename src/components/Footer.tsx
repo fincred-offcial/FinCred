@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { LegalModal, LegalModalType } from './LegalModals.js';
 import { useAuth } from '../context/AuthContext.js';
+import { FinCredLogo } from './FinCredLogo.js';
 
-interface FooterProps {
-  onOpenDownloadApp?: () => void;
-}
+interface FooterProps {}
 
-export const Footer: React.FC<FooterProps> = ({ onOpenDownloadApp }) => {
+export const Footer: React.FC<FooterProps> = () => {
   const [legalModalType, setLegalModalType] = useState<LegalModalType>(null);
   const { openTrackModal, isCustomerLoggedIn } = useAuth();
 
@@ -31,21 +30,9 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDownloadApp }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-6">
           {/* Main Compact Footer Grid */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8 border-b border-slate-800/80">
-            {/* 1. FINCRED Brand */}
+            {/* 1. FINCRED Brand with Premium Red + Golden + Blue Logo */}
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 p-[1.5px]">
-                  <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                    <ShieldCheck className="w-4 h-4 text-blue-400" />
-                  </div>
-                </div>
-                <span className="text-xl font-black text-white font-['Outfit',sans-serif]">
-                  Fin<span className="text-blue-500">Cred</span>
-                </span>
-                <span className="text-[10px] bg-blue-950 text-blue-400 px-2 py-0.5 rounded font-bold border border-blue-800">
-                  INDIA
-                </span>
-              </div>
+              <FinCredLogo variant="dark" size="md" />
               <p className="text-xs text-slate-400 leading-relaxed">
                 Independent digital loan assistance and referral platform.
               </p>

@@ -1,6 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="16" fill="#2563EB"/>
-  <path d="M32 12L48 18V32C48 42.5 41.2 52.2 32 55C22.8 52.2 16 42.5 16 32V18L32 12Z" fill="#1D4ED8" stroke="#60A5FA" stroke-width="2"/>
-  <path d="M26 23H38M26 31H35M26 23V42" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="39" cy="39" r="3" fill="#34D399"/>
+  <defs>
+    <linearGradient id="fincred-bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#DC2626"/>
+      <stop offset="48%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="gold-accent" x1="16" y1="12" x2="48" y2="55" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#fincred-bg)"/>
+  <rect x="2" y="2" width="60" height="60" rx="14" stroke="url(#gold-accent)" stroke-width="1.5" stroke-opacity="0.8"/>
+  <path d="M32 11L49 18V31C49 42 41.5 51.5 32 54.5C22.5 51.5 15 42 15 31V18L32 11Z" fill="#0F172A" stroke="url(#gold-accent)" stroke-width="2"/>
+  <path d="M25 22H39M25 30H36M25 22V42" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="38" cy="38" r="3.5" fill="#F59E0B" stroke="#FEF08A" stroke-width="1"/>
 </svg>

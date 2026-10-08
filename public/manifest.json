@@ -7,7 +7,7 @@
   "background_color": "#070B14",
   "display": "standalone",
   "orientation": "portrait",
-  "start_url": "/app",
+  "start_url": "/",
   "scope": "/",
   "icons": [
     {

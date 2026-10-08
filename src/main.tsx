@@ -6,7 +6,11 @@ import { registerSW } from 'virtual:pwa-register';
 
 // Register PWA service worker with error handling for sandbox/iframe environments
 try {
-  if (typeof window !== 'undefined' && 'serviceWorker' in navigator && window.location.protocol === 'https:') {
+  if (
+    typeof window !== 'undefined' &&
+    'serviceWorker' in navigator &&
+    (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ) {
     registerSW({
       immediate: true,
       onRegisterError(error) {

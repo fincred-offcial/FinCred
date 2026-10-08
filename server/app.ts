@@ -1232,7 +1232,25 @@ api.post('/app/auth/forgot-password', async (req: Request, res: Response) => {
 
 api.get('/app/loans/products', async (req: Request, res: Response) => {
   const options = await firestoreDb.getLoanOptions();
-  res.setHeader('Content-Type', 'application/json').json({ success: true, products: options });
+  const formattedProducts = (options || []).map((opt: any) => ({
+    id: opt.optionId || opt.id,
+    name: opt.name,
+    category: opt.category,
+    maxAmount: opt.loanAmountRange || opt.maxAmount || '₹5,00,000',
+    minAmount: opt.minAmount || '₹25,000',
+    interestRate: opt.interestRate || 'From 10.49% p.a.',
+    tenure: opt.tenureRange || opt.tenure || '12-60 Months',
+    features: Array.isArray(opt.features) && opt.features.length > 0
+      ? opt.features
+      : (Array.isArray(opt.eligibilityInfo) && opt.eligibilityInfo.length > 0
+        ? opt.eligibilityInfo
+        : ['Instant 100% digital sanction', 'Paperless verification', 'No branch visit needed']),
+    partnerName: opt.partnerName,
+    destinationUrl: opt.applicationUrl || opt.destinationUrl || '',
+    badge: opt.badge || 'Popular',
+    isPopular: !!opt.badge
+  }));
+  res.setHeader('Content-Type', 'application/json').json({ success: true, products: formattedProducts });
 });
 
 api.put('/app/customer/profile', requireCustomer, async (req: Request, res: Response) => {

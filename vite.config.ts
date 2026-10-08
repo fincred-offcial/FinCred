@@ -145,7 +145,7 @@ export default defineConfig(() => {
           theme_color: '#2563eb',
           background_color: '#ffffff',
           display: 'standalone',
-          start_url: '/app',
+          start_url: '/',
           scope: '/',
           icons: [
             {
@@ -169,7 +169,8 @@ export default defineConfig(() => {
           ],
         },
         devOptions: {
-          enabled: false,
+          enabled: true,
+          type: 'module',
         },
       }),
     ],

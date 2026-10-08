@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext.js';
 import { Navbar } from './components/Navbar.js';
 import { MobileBottomNav } from './components/MobileBottomNav.js';
@@ -7,11 +7,8 @@ import { Footer } from './components/Footer.js';
 import { LoanApplicationModal } from './components/LoanApplicationModal.js';
 import { InstantLoanModal } from './components/InstantLoanModal.js';
 import { ApplicationTrackingModal } from './components/ApplicationTrackingModal.js';
-import { DownloadAppModal } from './components/DownloadAppModal.js';
 import { CibilImproveModal } from './components/CibilImproveModal.js';
-import { TopDownloadBanner } from './components/TopDownloadBanner.js';
 import { OfflineIndicator } from './components/OfflineIndicator.js';
-import { AppSplashScreen } from './components/AppSplashScreen.js';
 import { FloatingCustomerButton } from './components/FloatingCustomerButton.js';
 import { ErrorBoundary } from './components/ErrorBoundary.js';
 
@@ -24,7 +21,6 @@ import { ApplicationsPage } from './pages/ApplicationsPage.js';
 import { ProfilePage } from './pages/ProfilePage.js';
 import { AdminLoginPage } from './pages/AdminLoginPage.js';
 import { AdminDashboardPage } from './pages/AdminDashboardPage.js';
-import { MobileApp } from './mobile/MobileApp.js';
 
 const ProtectedCustomerRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isCustomerLoggedIn } = useAuth();
@@ -36,7 +32,6 @@ const ProtectedCustomerRoute: React.FC<{ children: React.ReactNode }> = ({ child
 
 const AppContent: React.FC = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const {
     isTrackModalOpen,
     closeTrackModal,
@@ -59,59 +54,11 @@ const AppContent: React.FC = () => {
     } catch {}
   }, [location.search]);
 
-  // If running in installed standalone mode (PWA/downloaded app), automatically route to the mobile app
-  useEffect(() => {
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as unknown as { standalone?: boolean }).standalone === true ||
-      new URLSearchParams(window.location.search).get('source') === 'pwa';
-
-    if (isStandalone && (location.pathname === '/' || location.pathname === '')) {
-      navigate('/app', { replace: true });
-    }
-  }, [location.pathname, navigate]);
-
-  const isAdminRoute =
-    location.pathname.toLowerCase().startsWith('/admin');
-
-  const isMobileAppRoute =
-    location.pathname.toLowerCase().startsWith('/app') ||
-    location.pathname.toLowerCase().startsWith('/mobile');
-
-  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
-
-  const handleCloseDownloadModal = () => {
-    setIsDownloadModalOpen(false);
-    sessionStorage.setItem('fincred_app_download_dismissed', 'true');
-  };
-
-  const handleOpenDownloadModal = () => {
-    setIsDownloadModalOpen(true);
-  };
-
-  if (isMobileAppRoute) {
-    return (
-      <Routes>
-        <Route path="/app/*" element={<MobileApp />} />
-        <Route path="/app" element={<MobileApp />} />
-        <Route path="/mobile" element={<MobileApp />} />
-        <Route path="*" element={<Navigate to="/app" replace />} />
-      </Routes>
-    );
-  }
+  const isAdminRoute = location.pathname.toLowerCase().startsWith('/admin');
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white relative">
-      {/* Premium App Opening Splash Screen */}
-      <AppSplashScreen />
-
-      {!isAdminRoute && (
-        <>
-          <Navbar onOpenDownloadApp={handleOpenDownloadModal} />
-          {/* Simple, compact Top Download Option with Cut ('X') button */}
-          <TopDownloadBanner onOpenModal={handleOpenDownloadModal} />
-        </>
-      )}
+      {!isAdminRoute && <Navbar />}
 
       <div className="flex-1">
         <Routes>
@@ -158,12 +105,18 @@ const AppContent: React.FC = () => {
           <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
           <Route path="/admin/dashboard" element={<Navigate to="/admin-dashboard" replace />} />
 
+          {/* Former app routes cleanly fallback to home */}
+          <Route path="/app/*" element={<Navigate to="/" replace />} />
+          <Route path="/app" element={<Navigate to="/" replace />} />
+          <Route path="/mobile/*" element={<Navigate to="/" replace />} />
+          <Route path="/mobile" element={<Navigate to="/" replace />} />
+
           {/* Catch-all fallback to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
 
-      {!isAdminRoute && !isCustomerLoggedIn && <Footer onOpenDownloadApp={handleOpenDownloadModal} />}
+      {!isAdminRoute && !isCustomerLoggedIn && <Footer />}
       {!isAdminRoute && <MobileBottomNav />}
       {!isAdminRoute && <FloatingCustomerButton />}
 
@@ -186,16 +139,8 @@ const AppContent: React.FC = () => {
         defaultTrackingRef={cibilTrackingRef}
       />
 
-      {/* Progressive Web App: Compact Download Modal & Offline Indicator */}
-      {!isAdminRoute && (
-        <>
-          <DownloadAppModal 
-            isOpen={isDownloadModalOpen} 
-            onClose={handleCloseDownloadModal} 
-          />
-          <OfflineIndicator />
-        </>
-      )}
+      {/* Offline Status Indicator */}
+      {!isAdminRoute && <OfflineIndicator />}
     </div>
   );
 };

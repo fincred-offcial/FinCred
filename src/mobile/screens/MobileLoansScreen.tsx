@@ -154,14 +154,16 @@ export const MobileLoansScreen: React.FC<MobileLoansScreenProps> = ({ onOpenAppl
               </div>
 
               {/* Key Features */}
-              <div className="space-y-1">
-                {product.features.map((feat, idx) => (
-                  <div key={idx} className="flex items-center gap-1.5 text-[11px] text-slate-300">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
-                    <span>{feat}</span>
-                  </div>
-                ))}
-              </div>
+              {((product.features || (product as any).eligibilityInfo) || []).length > 0 && (
+                <div className="space-y-1">
+                  {((product.features || (product as any).eligibilityInfo) || []).map((feat: string, idx: number) => (
+                    <div key={idx} className="flex items-center gap-1.5 text-[11px] text-slate-300">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                      <span>{feat}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Actions */}
               <div className="pt-2 flex items-center gap-2 border-t border-slate-800/80">

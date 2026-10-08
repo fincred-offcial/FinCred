@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FinCredLogo } from '../components/FinCredLogo.js';
 import {
   Users,
   FileText,
@@ -23,6 +24,7 @@ import {
   Smartphone,
   Mail,
   ChevronRight,
+  ChevronDown,
   Clock,
   Bell,
   TrendingUp,
@@ -34,7 +36,8 @@ import {
   DollarSign,
   Gift,
   SlidersHorizontal,
-  Share2
+  Share2,
+  Menu
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.js';
 import {
@@ -83,6 +86,19 @@ export const AdminDashboardPage: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [isEarnSettingsOpen, setIsEarnSettingsOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
+  const adminMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (adminMenuRef.current && !adminMenuRef.current.contains(event.target as Node)) {
+        setIsAdminMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Core Data States
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -438,20 +454,137 @@ export const AdminDashboardPage: React.FC = () => {
   const confirmedCibilCount = cibilOrders.filter(o => o.status === 'confirmed').length;
   const totalCibilRevenue = confirmedCibilCount * 299;
 
+  const navItems = [
+    {
+      id: 'overview' as AdminTab,
+      label: 'Overview',
+      icon: BarChart3
+    },
+    {
+      id: 'cibil' as AdminTab,
+      label: 'CIBIL Score Orders',
+      icon: TrendingUp,
+      count: cibilOrders.length,
+      badge: pendingCibilCount > 0 ? `${pendingCibilCount} New` : null
+    },
+    {
+      id: 'app_rewards' as AdminTab,
+      label: 'App Rewards (₹100)',
+      icon: Gift
+    },
+    {
+      id: 'loan_referrals' as AdminTab,
+      label: 'Loan Referrals & Payouts',
+      icon: Share2
+    },
+    {
+      id: 'applications' as AdminTab,
+      label: 'Loan Applications',
+      icon: FileText,
+      count: applications.length
+    },
+    {
+      id: 'customers' as AdminTab,
+      label: 'Customer Leads',
+      icon: Users,
+      count: customers.length
+    },
+    {
+      id: 'links' as AdminTab,
+      label: 'Partner Links',
+      icon: LinkIcon
+    },
+    {
+      id: 'notifications' as AdminTab,
+      label: 'Notifications',
+      icon: Bell,
+      count: notifications.length
+    }
+  ];
+
+  const renderNavList = (onSelect?: () => void) => (
+    <div className="flex flex-col h-full select-none">
+      <div className="px-3 py-2 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 flex items-center justify-between">
+        <span>Admin Options</span>
+        <span className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-full font-bold">Fixed Menu</span>
+      </div>
+
+      <nav className="flex-1 space-y-1.5 py-3 overflow-y-auto">
+        {navItems.map(item => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                setActiveTab(item.id);
+                if (onSelect) onSelect();
+              }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                isActive
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+              }`}
+            >
+              <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+              <span className="flex-1 truncate">{item.label}</span>
+              {item.count !== undefined && (
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${isActive ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                  {item.count}
+                </span>
+              )}
+              {item.badge && (
+                <span className="text-[9px] px-1.5 py-0.2 rounded-full font-black bg-amber-400 text-slate-950 animate-pulse">
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+
+        {/* Earn Settings */}
+        <button
+          type="button"
+          onClick={() => {
+            setIsEarnSettingsOpen(true);
+            if (onSelect) onSelect();
+          }}
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 transition-colors text-left cursor-pointer mt-2"
+        >
+          <SlidersHorizontal className="w-4 h-4 text-amber-700 shrink-0" />
+          <span className="flex-1">Earn Settings</span>
+          <span className="text-[9px] font-black text-amber-800 bg-amber-200/70 px-1.5 py-0.2 rounded-full">Config</span>
+        </button>
+      </nav>
+
+      {/* Log Out Option INSIDE the side options list */}
+      <div className="pt-3 border-t border-slate-200 mt-auto">
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-xs font-bold transition-colors cursor-pointer"
+        >
+          <LogOut className="w-4 h-4 shrink-0" />
+          <span>Sign Out / Log Out</span>
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-20 select-none">
       
       {/* Top Header */}
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-200 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center font-bold shadow-xs">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-base sm:text-lg font-black text-slate-900 font-['Outfit',sans-serif]">
-              FinCred Central Admin Console
+          <FinCredLogo size="sm" showSubtitle={false} />
+          <div className="h-6 w-[1px] bg-slate-200 hidden sm:block" />
+          <div className="hidden sm:block">
+            <h1 className="text-sm font-black text-slate-900 font-['Outfit',sans-serif]">
+              Admin Central Console
             </h1>
-            <p className="text-[11px] text-slate-500 font-medium">RBI NBFC Partner Operations & CIBIL Hub</p>
+            <p className="text-[10px] text-slate-500 font-medium">RBI NBFC Partner Operations & CIBIL Hub</p>
           </div>
         </div>
 
@@ -474,155 +607,171 @@ export const AdminDashboardPage: React.FC = () => {
             <RefreshCw className="w-4 h-4" />
           </button>
 
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-xs font-bold transition-colors cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Sign Out</span>
-          </button>
+          {/* Admin Account Button with dropdown (Sign Out is inside it!) */}
+          <div className="relative" ref={adminMenuRef}>
+            <button
+              type="button"
+              onClick={() => setIsAdminMenuOpen(!isAdminMenuOpen)}
+              id="admin-header-account-btn"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 text-xs font-bold transition-all cursor-pointer"
+              title="Admin Menu"
+            >
+              <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-bold text-white shadow-2xs">
+                A
+              </div>
+              <span className="hidden sm:inline">Admin</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${isAdminMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isAdminMenuOpen && (
+              <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="px-4 py-2 border-b border-slate-100">
+                  <p className="text-xs font-black text-slate-900">Administrator</p>
+                  <p className="text-[10px] text-slate-500">RBI NBFC Operations Hub</p>
+                </div>
+                <div className="py-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAdminMenuOpen(false);
+                      loadAllData();
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 text-left cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Refresh Data</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAdminMenuOpen(false);
+                      setIsEarnSettingsOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 text-left cursor-pointer"
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Earn Settings</span>
+                  </button>
+                  <a
+                    href={`https://wa.me/${WHATSAPP_SUPPORT.replace('+', '')}?text=${encodeURIComponent('Hello Admin Support')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsAdminMenuOpen(false)}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 text-left cursor-pointer"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>WhatsApp Support</span>
+                  </a>
+                </div>
+                <div className="border-t border-slate-100 pt-1 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAdminMenuOpen(false);
+                      handleLogout();
+                    }}
+                    id="admin-dropdown-logout-btn"
+                    className="w-full flex items-center gap-2 px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50 text-left cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-red-500" />
+                    <span>Sign Out / Log Out</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-5">
-        
-        {/* Feedback Alert */}
-        {feedback && (
-          <div className="p-3.5 rounded-2xl text-xs flex items-center justify-between gap-2 shadow-xs bg-emerald-50 border border-emerald-200 text-emerald-900 animate-in fade-in duration-200">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span className="font-semibold">{feedback.message}</span>
+      {/* Main Container: Fixed Left Side Rail + Main Content Area */}
+      <div className="max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 pt-6">
+        <div className="flex flex-col lg:flex-row items-start gap-6">
+
+          {/* FIXED LEFT SIDEBAR: All Admin Portal Options Fixed to One Side */}
+          <aside className="w-full lg:w-64 xl:w-72 shrink-0 lg:sticky lg:top-20 z-20">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-3 sm:p-4">
+              <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-800">Admin Options</span>
+                </div>
+                <span className="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded-full border border-blue-200">
+                  Fixed Menu
+                </span>
+              </div>
+
+              {/* Vertical Navigation Items: No horizontal scrolling needed! */}
+              <nav className="space-y-1.5 max-h-[calc(100vh-13rem)] overflow-y-auto pr-1">
+                {navItems.map(item => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActiveTab(item.id)}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                      <span className="flex-1 truncate">{item.label}</span>
+                      {item.count !== undefined && (
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${isActive ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                          {item.count}
+                        </span>
+                      )}
+                      {item.badge && (
+                        <span className="text-[9px] px-1.5 py-0.2 rounded-full font-black bg-amber-400 text-slate-950 animate-pulse">
+                          {item.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+
+                {/* Earn Settings in Fixed Menu */}
+                <button
+                  type="button"
+                  onClick={() => setIsEarnSettingsOpen(true)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors text-left cursor-pointer mt-2"
+                >
+                  <SlidersHorizontal className="w-4 h-4 text-amber-700 shrink-0" />
+                  <span className="flex-1">Earn Settings</span>
+                  <span className="text-[9px] font-black text-amber-800 bg-amber-200 px-1.5 py-0.2 rounded-full">Config</span>
+                </button>
+              </nav>
+
+              {/* Logout Option also inside Fixed Menu bottom */}
+              <div className="pt-3 border-t border-slate-100 mt-3">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  <LogOut className="w-3.5 h-3.5 shrink-0" />
+                  <span>Sign Out / Log Out</span>
+                </button>
+              </div>
             </div>
-            <button onClick={() => setFeedback(null)} className="text-emerald-700 hover:text-emerald-900 cursor-pointer">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
+          </aside>
 
-        {/* Primary Navigation Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-200">
-          <button
-            type="button"
-            onClick={() => setActiveTab('overview')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === 'overview'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <BarChart3 className="w-4 h-4" />
-            <span>Overview</span>
-          </button>
-
-          {/* CIBIL ORDERS (Highlighted Feature) */}
-          <button
-            type="button"
-            onClick={() => setActiveTab('cibil')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer relative ${
-              activeTab === 'cibil'
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'text-emerald-700 hover:bg-emerald-50 border border-emerald-200'
-            }`}
-          >
-            <TrendingUp className="w-4 h-4" />
-            <span>CIBIL Score Orders ({cibilOrders.length})</span>
-            {pendingCibilCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-400 text-slate-950 animate-pulse">
-                {pendingCibilCount} New
-              </span>
+          {/* MAIN CONTENT AREA */}
+          <main className="flex-1 min-w-0 w-full space-y-5">
+            {/* Feedback Alert */}
+            {feedback && (
+              <div className="p-3.5 rounded-2xl text-xs flex items-center justify-between gap-2 shadow-xs bg-emerald-50 border border-emerald-200 text-emerald-900 animate-in fade-in duration-200">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span className="font-semibold">{feedback.message}</span>
+                </div>
+                <button onClick={() => setFeedback(null)} className="text-emerald-700 hover:text-emerald-900 cursor-pointer">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             )}
-          </button>
-
-          {/* APP REWARD MANAGEMENT (Requirement 4) */}
-          <button
-            type="button"
-            onClick={() => setActiveTab('app_rewards')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === 'app_rewards'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-indigo-700 hover:bg-indigo-50 border border-indigo-200'
-            }`}
-          >
-            <Gift className="w-4 h-4" />
-            <span>App Rewards (₹100)</span>
-          </button>
-
-          {/* LOAN REFERRALS & 24H PAYOUTS (Requirement 11, 12, 14) */}
-          <button
-            type="button"
-            onClick={() => setActiveTab('loan_referrals')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === 'loan_referrals'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-purple-700 hover:bg-purple-50 border border-purple-200'
-            }`}
-          >
-            <Share2 className="w-4 h-4" />
-            <span>Loan Referrals & 24h Payouts</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('applications')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === 'applications'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            <span>Loan Applications ({applications.length})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('customers')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === 'customers'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span>Customer Leads ({customers.length})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('links')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === 'links'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <LinkIcon className="w-4 h-4" />
-            <span>Partner Links</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('notifications')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === 'notifications'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <Bell className="w-4 h-4" />
-            <span>Notifications ({notifications.length})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsEarnSettingsOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300 ml-auto whitespace-nowrap cursor-pointer transition-colors"
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5 text-amber-600" />
-            <span>Earn Settings</span>
-          </button>
-        </div>
 
         {/* Loading Indicator */}
         {isLoading && (
@@ -757,7 +906,7 @@ export const AdminDashboardPage: React.FC = () => {
                   <p className="text-xs text-slate-400 py-6 text-center">No CIBIL orders submitted yet.</p>
                 ) : (
                   <div className="space-y-2.5">
-                    {cibilOrders.slice(0, 5).map(o => (
+                    {(cibilOrders || []).slice(0, 5).map(o => (
                       <div key={o.orderId} className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
                         <div>
                           <div className="flex items-center gap-2">
@@ -813,7 +962,7 @@ export const AdminDashboardPage: React.FC = () => {
                   <p className="text-xs text-slate-400 py-6 text-center">No loan applications yet.</p>
                 ) : (
                   <div className="space-y-2.5">
-                    {applications.slice(0, 5).map(a => (
+                    {(applications || []).slice(0, 5).map(a => (
                       <div key={a.applicationId} className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
                         <div>
                           <div className="flex items-center gap-2">
@@ -1605,6 +1754,8 @@ export const AdminDashboardPage: React.FC = () => {
         )}
 
       </main>
+        </div>
+      </div>
 
       {/* Earn & Refer Settings Modal */}
       <AdminEarnSettingsModal

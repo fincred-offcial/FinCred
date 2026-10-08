@@ -25,24 +25,18 @@ export const TopDownloadBanner: React.FC<TopDownloadBannerProps> = ({ onOpenModa
 
   const handleDownload = async () => {
     if (isInstallable) {
-      const outcome = await install();
-      if (outcome) {
+      const ok = await install();
+      if (ok) {
         setDownloadSuccess(true);
         setTimeout(() => {
           setIsDismissed(true);
-        }, 2200);
+        }, 1500);
         return;
       }
     }
-    
-    // If not directly installable or on iOS/desktop, open the modal or show success
+
     if (onOpenModal) {
       onOpenModal();
-    } else {
-      setDownloadSuccess(true);
-      setTimeout(() => {
-        setIsDismissed(true);
-      }, 2000);
     }
   };
 

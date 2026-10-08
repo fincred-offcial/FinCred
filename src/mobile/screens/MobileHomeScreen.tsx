@@ -267,48 +267,55 @@ export const MobileHomeScreen: React.FC<MobileHomeScreenProps> = ({
         </div>
 
         <div className="space-y-3">
-          {products.slice(0, 3).map(product => (
-            <div
-              key={product.id}
-              className="p-4 rounded-2xl bg-[#111A2E] border border-slate-800 hover:border-slate-700 transition-all space-y-3 shadow-sm"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <span className="inline-block px-2 py-0.5 rounded-md bg-blue-500/15 text-cyan-300 text-[10px] font-bold border border-blue-500/20 mb-1">
-                    {product.badge}
-                  </span>
-                  <h4 className="text-sm font-bold text-white">{product.name}</h4>
-                  <p className="text-[11px] text-slate-400">Partner: {product.partnerName}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <div className="text-xs font-bold text-emerald-400 font-mono">{product.maxAmount}</div>
-                  <div className="text-[10px] text-slate-400">{product.interestRate}</div>
-                </div>
-              </div>
+          {(products || []).slice(0, 3).map(product => {
+            const productFeatures = Array.isArray(product.features)
+              ? product.features
+              : (Array.isArray((product as any).eligibilityInfo) ? (product as any).eligibilityInfo : []);
 
-              {/* Features Chips */}
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {product.features.slice(0, 2).map((f, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1 text-[10px] text-slate-300 bg-[#0A0F1D] px-2 py-1 rounded-lg border border-slate-800"
+            return (
+              <div
+                key={product.id}
+                className="p-4 rounded-2xl bg-[#111A2E] border border-slate-800 hover:border-slate-700 transition-all space-y-3 shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <span className="inline-block px-2 py-0.5 rounded-md bg-blue-500/15 text-cyan-300 text-[10px] font-bold border border-blue-500/20 mb-1">
+                      {product.badge}
+                    </span>
+                    <h4 className="text-sm font-bold text-white">{product.name}</h4>
+                    <p className="text-[11px] text-slate-400">Partner: {product.partnerName}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-xs font-bold text-emerald-400 font-mono">{product.maxAmount}</div>
+                    <div className="text-[10px] text-slate-400">{product.interestRate}</div>
+                  </div>
+                </div>
+
+                {/* Features Chips */}
+                {productFeatures.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {(productFeatures || []).slice(0, 2).map((f: string, i: number) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 text-[10px] text-slate-300 bg-[#0A0F1D] px-2 py-1 rounded-lg border border-slate-800"
+                      >
+                        <CheckCircle2 className="w-2.5 h-2.5 text-cyan-400" />
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="pt-2 flex items-center gap-2 border-t border-slate-800/80">
+                  <button
+                    type="button"
+                    onClick={() => onOpenApply(product)}
+                    className="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 cursor-pointer transition-all"
                   >
-                    <CheckCircle2 className="w-2.5 h-2.5 text-cyan-400" />
-                    {f}
-                  </span>
-                ))}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="pt-2 flex items-center gap-2 border-t border-slate-800/80">
-                <button
-                  type="button"
-                  onClick={() => onOpenApply(product)}
-                  className="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 cursor-pointer transition-all"
-                >
-                  <span>Quick Apply</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                    <span>Quick Apply</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
 
                 <a
                   href={product.destinationUrl}
@@ -321,7 +328,8 @@ export const MobileHomeScreen: React.FC<MobileHomeScreenProps> = ({
                 </a>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

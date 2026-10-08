@@ -81,7 +81,7 @@ export async function apiRequest<T = any>(endpoint: string, options: RequestOpti
       headers
     });
   } catch (networkErr: any) {
-    console.error(`[API Network Error] ${fetchOptions.method || 'GET'} ${url}:`, networkErr);
+    console.warn(`[API Network Notice] ${fetchOptions.method || 'GET'} ${url}:`, networkErr);
     throw new ApiError(
       'Unable to connect to the server. Please check your internet connection and try again.',
       0,
@@ -180,7 +180,7 @@ export async function safeFetch(endpoint: string, init?: RequestInit): Promise<R
   try {
     res = await fetch(url, init);
   } catch (err: any) {
-    console.error(`[Network Error] ${init?.method || 'GET'} ${url}:`, err);
+    console.warn(`[Network Notice] ${init?.method || 'GET'} ${url}:`, err);
     throw new ApiError('Unable to connect to the server. Please check your network connection and try again.', 0, 'NETWORK_ERROR', err);
   }
 
