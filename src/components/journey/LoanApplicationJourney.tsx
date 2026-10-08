@@ -28,7 +28,8 @@ import {
   ChevronDown,
   Store,
   Copy,
-  MessageSquare
+  MessageSquare,
+  IndianRupee
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import {
@@ -37,13 +38,16 @@ import {
   checkMobileRegistration,
   submitLoanApplication,
   logUserActivity,
-  fetchCustomerApplications
+  fetchCustomerApplications,
+  updateCustomerProfile
 } from '../../services/api.js';
+import { updateCustomerInFirestore } from '../../services/firestoreService.js';
 import { SmsNotificationBanner } from '../SmsNotificationBanner.js';
-import { LoanApplication } from '../../types.js';
+import { LoanApplication, Customer } from '../../types.js';
 
 type JourneyStep =
   | 'MOBILE_INPUT'
+  | 'POST_OTP_PROFILE'
   | 'LOAN_TYPE_SELECTION'
   | 'LENDER_SELECTION'
   | 'APPLICATION_FORM'
@@ -92,6 +96,11 @@ export const LoanApplicationJourney: React.FC = () => {
   const [timer, setTimer] = useState(45);
   const [canResend, setCanResend] = useState(false);
   const [otpCopied, setOtpCopied] = useState(false);
+
+  // Post-OTP Profile Completion State (Full Name & Monthly Income)
+  const [pendingCustomer, setPendingCustomer] = useState<Customer | null>(null);
+  const [pendingToken, setPendingToken] = useState<string | null>(null);
+  const [profileMonthlyIncome, setProfileMonthlyIncome] = useState<string>('');
 
   // Step 2: Loan Category
   const [selectedLoanType, setSelectedLoanType] = useState<'Personal Loan' | 'Business Loan'>('Personal Loan');
@@ -313,22 +322,26 @@ export const LoanApplicationJourney: React.FC = () => {
       const token = res.token || (res as any).data?.token;
 
       if (customer && token) {
-        setCustomerSession(customer, token);
-        if (customer.fullName && customer.fullName !== 'Valued Customer') {
+        setPendingCustomer(customer);
+        setPendingToken(token);
+        if (customer.fullName && customer.fullName !== 'Valued Customer' && customer.fullName !== 'Valued Borrower') {
           setFullName(customer.fullName);
         }
         if (customer.email) setEmail(customer.email);
         if (customer.panNumber) setPanNumber(customer.panNumber);
         if (customer.dob) setDob(customer.dob);
         if (customer.pincode) setPincode(customer.pincode);
-        if (customer.monthlyIncome) setMonthlyIncome(String(customer.monthlyIncome));
+        if (customer.monthlyIncome) {
+          setProfileMonthlyIncome(String(customer.monthlyIncome));
+          setMonthlyIncome(String(customer.monthlyIncome));
+        }
         if (customer.requiredLoanAmount) setAmountRequested(String(customer.requiredLoanAmount));
 
         // Non-blocking user activity logging
         try {
           logUserActivity({
             activityType: 'auth_success',
-            description: 'Mobile number entered and verified successfully',
+            description: 'Mobile number entered and verified successfully with OTP',
             customerId: customer.customerId,
             userMobile: mobileNumber.trim(),
             userName: customer.fullName,
@@ -336,13 +349,99 @@ export const LoanApplicationJourney: React.FC = () => {
           });
         } catch {}
 
-        // Navigate customer immediately to User Portal Dashboard
-        navigate('/dashboard?tab=home', { replace: true });
+        // User requirement 6: "Aur jo ek baar sign kar chuke hai unko dobara login karne par name aur income fill karne ki koi jarurat nhi hai"
+        const hasCompletedProfile = Boolean(
+          customer.fullName &&
+          customer.fullName.trim().length >= 2 &&
+          customer.fullName !== 'Valued Customer' &&
+          customer.fullName !== 'Valued Borrower' &&
+          customer.fullName !== 'New Applicant' &&
+          customer.monthlyIncome &&
+          Number(customer.monthlyIncome) > 0
+        );
+
+        if (hasCompletedProfile) {
+          // Already signed up previously: direct redirect to User Portal without asking name and income again!
+          setCustomerSession(customer, token);
+          navigate('/dashboard?tab=home', { replace: true });
+        } else {
+          // First-time signup or profile incomplete: prompt to fill Name & Income
+          setCurrentStep('POST_OTP_PROFILE');
+        }
       } else {
         throw new Error('Verification completed but customer session could not be established. Please retry.');
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Invalid verification code. Please check and re-enter.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Step: Handle Full Name and Monthly Income submission after OTP verification
+  const handleContinuePostOtpProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+
+    const cleanFullName = fullName.trim();
+    const incomeNum = Number(profileMonthlyIncome);
+
+    if (cleanFullName.length < 2) {
+      setErrorMessage('Kripya apna poora naam (Full Name) enter karein.');
+      return;
+    }
+
+    if (!incomeNum || incomeNum <= 0) {
+      setErrorMessage('Kripya apni Monthly Income enter karein.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      let activeCustomer = pendingCustomer || customer;
+      if (activeCustomer?.customerId) {
+        try {
+          const updateRes = await updateCustomerProfile(activeCustomer.customerId, {
+            fullName: cleanFullName,
+            monthlyIncome: incomeNum
+          });
+          if (updateRes?.customer) {
+            activeCustomer = updateRes.customer;
+          }
+          await updateCustomerInFirestore(activeCustomer.customerId, {
+            fullName: cleanFullName,
+            monthlyIncome: incomeNum
+          });
+        } catch (uErr) {
+          console.warn('Profile update notice:', uErr);
+        }
+      }
+
+      const finalCustomer: Customer = {
+        ...(activeCustomer || ({} as Customer)),
+        fullName: cleanFullName,
+        monthlyIncome: incomeNum
+      };
+
+      if (pendingToken) {
+        setCustomerSession(finalCustomer, pendingToken);
+      }
+
+      try {
+        logUserActivity({
+          activityType: 'profile_updated',
+          description: 'Profile name and monthly income filled after OTP verification',
+          customerId: finalCustomer.customerId,
+          userMobile: mobileNumber.trim(),
+          userName: cleanFullName,
+          metadata: { fullName: cleanFullName, monthlyIncome: incomeNum }
+        });
+      } catch {}
+
+      // Continue to User Portal Dashboard
+      navigate('/dashboard?tab=home', { replace: true });
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Details save karne me samasya aayi. Kripya punah prayas karein.');
     } finally {
       setIsSubmitting(false);
     }
@@ -1173,6 +1272,112 @@ export const LoanApplicationJourney: React.FC = () => {
               <div className="h-[1px] w-12 bg-slate-200" />
             </div>
 
+          </div>
+        </div>
+      ) : currentStep === 'POST_OTP_PROFILE' ? (
+        <div className="w-full max-w-lg mx-auto py-8 sm:py-14 px-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl border border-blue-200/90 shadow-2xl p-6 sm:p-8 space-y-6">
+            
+            {/* Header with Green Verified Mobile Badge */}
+            <div className="text-center space-y-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-2xs">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Mobile Verified: +91 {mobileNumber}</span>
+              </span>
+
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 font-['Outfit',sans-serif] tracking-tight">
+                Enter Name & Income
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 max-w-xs mx-auto">
+                Kripya apna poora naam aur monthly income enter karke Continue karein.
+              </p>
+            </div>
+
+            {errorMessage && (
+              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs font-medium text-red-700 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-500 mt-0.5" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleContinuePostOtpProfile} className="space-y-4">
+              {/* Field 1: Full Name */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Full Name</span>
+                  <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={e => setFullName(e.target.value)}
+                  placeholder="Aadhaar / PAN card ke anusaar poora naam"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-400 bg-slate-50 focus:bg-white"
+                />
+              </div>
+
+              {/* Field 2: Monthly Income */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                  <IndianRupee className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Monthly Income (₹)</span>
+                  <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">
+                    ₹
+                  </span>
+                  <input
+                    type="number"
+                    required
+                    min={1000}
+                    value={profileMonthlyIncome}
+                    onChange={e => setProfileMonthlyIncome(e.target.value)}
+                    placeholder="e.g. 35000"
+                    className="w-full pl-9 pr-4 py-3 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-400 bg-slate-50 focus:bg-white font-mono"
+                  />
+                </div>
+
+                {/* Quick Selection Pills */}
+                <div className="flex flex-wrap gap-1.5 pt-2">
+                  {[25000, 35000, 50000, 75000, 100000].map(amt => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => setProfileMonthlyIncome(String(amt))}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        profileMonthlyIncome === String(amt)
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
+                      }`}
+                    >
+                      ₹{amt.toLocaleString('en-IN')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Continue Button */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full mt-2 py-4 px-6 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99] disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Saving Details & Continuing...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Continue to User Portal</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
           </div>
         </div>
       ) : (

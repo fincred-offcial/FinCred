@@ -54,6 +54,7 @@ import {
 import { LoanApplication, ApplicationDocument, CustomerNotification, LoanCategory } from '../types.js';
 import { LoanApplicationWizard } from '../components/portal/LoanApplicationWizard.js';
 import { EarnAndReferSection } from '../components/portal/EarnAndReferSection.js';
+import { BasicLenderApplyModal } from '../components/portal/BasicLenderApplyModal.js';
 
 interface LoanCardItem {
   id: string;
@@ -191,16 +192,32 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  const handlePartnerRedirect = (url: string, partnerName: string, category: string) => {
-    logUserActivity({
-      activityType: 'partner_redirect',
-      description: `Opened ${partnerName} link from Customer Portal`,
-      customerId: customer?.customerId,
-      userMobile: customer?.mobileNumber,
-      userName: customer?.fullName,
-      metadata: { partner: partnerName, category, url }
+  // Basic Lender Application Modal (Required: Name, Mobile, Email, PAN, DOB before redirect)
+  const [basicApplyModal, setBasicApplyModal] = useState<{
+    isOpen: boolean;
+    lenderName: string;
+    lenderTag?: string;
+    lenderAmount?: string;
+    lenderUrl: string;
+    category?: string;
+  }>({
+    isOpen: false,
+    lenderName: '',
+    lenderTag: '',
+    lenderAmount: '',
+    lenderUrl: '',
+    category: 'Personal Loan'
+  });
+
+  const handlePartnerRedirect = (url: string, partnerName: string, category: string, amountRange?: string, tag?: string) => {
+    setBasicApplyModal({
+      isOpen: true,
+      lenderName: partnerName,
+      lenderTag: tag || 'RBI Registered Partner',
+      lenderAmount: amountRange,
+      lenderUrl: url,
+      category: category || 'Personal Loan'
     });
-    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const handleOpenCategoryModal = (cat: 'Personal Loan' | 'Business Loan') => {
@@ -1554,6 +1571,21 @@ export const DashboardPage: React.FC = () => {
           }}
         />
       )}
+
+      {/* Basic Lender Application Form (Required: Name, Mobile, Email, PAN, DOB -> Redirect) */}
+      <BasicLenderApplyModal
+        isOpen={basicApplyModal.isOpen}
+        onClose={() => setBasicApplyModal(prev => ({ ...prev, isOpen: false }))}
+        lenderName={basicApplyModal.lenderName}
+        lenderTag={basicApplyModal.lenderTag}
+        lenderAmount={basicApplyModal.lenderAmount}
+        lenderUrl={basicApplyModal.lenderUrl}
+        category={basicApplyModal.category}
+        customer={customer}
+        onSuccessRedirect={(url) => {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }}
+      />
     </div>
   );
 };

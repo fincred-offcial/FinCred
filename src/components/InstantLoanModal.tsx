@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, ExternalLink, Zap, ShieldCheck, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.js';
 import { logUserActivity } from '../services/api.js';
+import { BasicLenderApplyModal } from './portal/BasicLenderApplyModal.js';
 
 interface InstantLoanPartner {
   id: string;
@@ -56,28 +57,13 @@ const INSTANT_PARTNERS: InstantLoanPartner[] = [
 ];
 
 export const InstantLoanModal: React.FC = () => {
-  const { isInstantLoanModalOpen, closeInstantLoanModal, openLoanModal, customer } = useAuth();
+  const { isInstantLoanModalOpen, closeInstantLoanModal, customer } = useAuth();
+  const [selectedPartnerForForm, setSelectedPartnerForForm] = useState<InstantLoanPartner | null>(null);
 
   if (!isInstantLoanModalOpen) return null;
 
   const handleApplyClick = (partner: InstantLoanPartner) => {
-    // Log customer redirection activity to backend admin database
-    logUserActivity({
-      activityType: 'partner_redirect',
-      description: `Customer clicked Instant Loan partner: ${partner.name}`,
-      customerId: customer?.customerId,
-      userMobile: customer?.mobileNumber,
-      userName: customer?.fullName,
-      metadata: {
-        partnerId: partner.id,
-        partnerName: partner.name,
-        targetUrl: partner.url
-      }
-    });
-
-    // Require completing the FinCred loan application form first
-    closeInstantLoanModal();
-    openLoanModal('Personal Loan / Instant Personal Loan', partner.id);
+    setSelectedPartnerForForm(partner);
   };
 
   return (
@@ -189,6 +175,26 @@ export const InstantLoanModal: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Basic Lender Apply Modal: Name, Mobile, Email, PAN, DOB before redirect */}
+      {selectedPartnerForForm && (
+        <BasicLenderApplyModal
+          isOpen={true}
+          onClose={() => {
+            setSelectedPartnerForForm(null);
+            closeInstantLoanModal();
+          }}
+          lenderName={selectedPartnerForForm.name}
+          lenderTag={selectedPartnerForForm.tag}
+          lenderAmount={selectedPartnerForForm.amount}
+          lenderUrl={selectedPartnerForForm.url}
+          category="Instant Personal Loan"
+          customer={customer}
+          onSuccessRedirect={(url) => {
+            window.open(url, '_blank', 'noopener,noreferrer');
+          }}
+        />
+      )}
     </div>
   );
 };
